@@ -22,11 +22,11 @@ fi
 
 mkdir -p "$DST"
 
-# 页面文件以仓库为准，每次部署覆盖
-for f in index.html logo.png qr.png qr-org.png; do
-  if [[ -f "$SRC/$f" ]]; then
-    cp -f "$SRC/$f" "$DST/$f"
-  fi
+# 页面文件以仓库为准，每次部署覆盖（qr.png / qr-org.png / qr-com.png… 全自动带上，避免漏文件）
+for f in "$SRC"/*; do
+  [[ -f "$f" ]] || continue
+  case "$f" in *.apk) continue;; esac
+  cp -f "$f" "$DST/$(basename "$f")"
 done
 
 # APK：不进 git，保留线上现有文件；缺失时从同机 site 目录借（或仓库 install-page 里手放的）
