@@ -32,9 +32,9 @@ app/
 ```bash
 cd c168_mobile/app
 npm i                    # 首次：装 @capacitor/cli 等
-npm run build:apk:site    # → dist-apk/EazyCount-v1.1-site.apk
-npm run build:apk:org     # → dist-apk/EazyCount-v1.1-org.apk
-npm run build:apk:com     # → dist-apk/EazyCount-v1.1-com.apk
+npm run build:apk:site    # → dist-apk/EazyCount-v1.2-site.apk
+npm run build:apk:org     # → dist-apk/EazyCount-v1.2-org.apk
+npm run build:apk:com     # → dist-apk/EazyCount-v1.2-com.apk
 ```
 
 `build-apk-for-site.mjs` 会把 `capacitor.config.json` 的 `server.url` 与 `www/index.html` 的重连地址临时改成对应域名，跑 `cap sync` + Gradle release，把产物拷到 `dist-apk/`，最后还原这两个文件。首次构建要下载 Gradle 和依赖，等几分钟。
@@ -53,9 +53,9 @@ npm run build:apk:com     # → dist-apk/EazyCount-v1.1-com.apk
 
 ```bash
 cd c168_mobile/app && scp -i ~/.ssh/count168-ec2.pem \
-  dist-apk/EazyCount-v1.1-site.apk ec2-user@56.68.48.190:/var/www/count168/app/EazyCount-v1.1.apk
-scp -i ~/.ssh/count168-ec2.pem dist-apk/EazyCount-v1.1-org.apk ec2-user@56.68.48.190:/var/www/count168.org/app/EazyCount-v1.1.apk
-scp -i ~/.ssh/count168-ec2.pem dist-apk/EazyCount-v1.1-com.apk ec2-user@56.68.48.190:/var/www/count168.com/app/EazyCount-v1.1.apk
+  dist-apk/EazyCount-v1.2-site.apk ec2-user@56.68.48.190:/var/www/count168/app/EazyCount-v1.2.apk
+scp -i ~/.ssh/count168-ec2.pem dist-apk/EazyCount-v1.2-org.apk ec2-user@56.68.48.190:/var/www/count168.org/app/EazyCount-v1.2.apk
+scp -i ~/.ssh/count168-ec2.pem dist-apk/EazyCount-v1.2-com.apk ec2-user@56.68.48.190:/var/www/count168.com/app/EazyCount-v1.2.apk
 ```
 
 （上传新版后可删掉各目录里的旧包；`deploy/publish-app-page.sh` 只发布 install-page 里的页面文件，**不会**再复制/借用 APK。）
@@ -131,9 +131,9 @@ cd c168_mobile/app && npm i && node make-qr.mjs   # 同时生成 qr.png 与 qr-o
 
 **APK**(不进 git,`c168_mobile/app/*.apk`、`dist-apk/` 已 gitignore)
 
-- **每个域名一份**、各自指向自己的域名：用 `npm run build:apk:site|org|com` 出包后，把 `dist-apk/EazyCount-v1.1-<域名>.apk` 分别 scp 到 `/var/www/<域名目录>/app/EazyCount-v1.1.apk`（详见上面「日常出包」）；
+- **每个域名一份**、各自指向自己的域名：用 `npm run build:apk:site|org|com` 出包后，把 `dist-apk/EazyCount-v1.2-<域名>.apk` 分别 scp 到 `/var/www/<域名目录>/app/EazyCount-v1.2.apk`（详见上面「日常出包」）；
 - **绝不要把某个域名的包复制到别的域名**——包里的 `server.url` 是写死的，放错了用户登录后看到的就是另一个域名的数据；
-- 发新版：改 `android/app/build.gradle` 的 `versionCode`/`versionName` → 三个域名各出一次包 → 各自上传新文件、删旧文件，并同步更新 `install-page/index.html` 里的**版本号和大小文案**（Android 卡片上有两处，含下载链接文件名）。
+- 发新版：改 `android/app/build.gradle` 的 `versionCode`/`versionName` → 三个域名各出一次包（产物文件名会自动带上新版本号）→ 各自上传新文件、删旧文件，并同步更新 `install-page/index.html` 里的**版本号、大小文案和下载文件名**（3 处：Android 卡片的文案与链接、桌面卡片的下载按钮）。
 
 **验证**
 
@@ -144,7 +144,7 @@ curl -sI https://www.count168.org/app/ | head -1
 curl -sI https://www.count168.com/app/ | head -1
 # 各域名的 APK 可下载，且包内 server.url 指向自己（在服务器上跑）
 for d in count168 count168.org count168.com; do
-  python3 -c "import zipfile,sys;print('$d', zipfile.ZipFile('/var/www/$d/app/EazyCount-v1.1.apk').read('assets/capacitor.config.json').decode()[:200])"
+  python3 -c "import zipfile,sys;print('$d', zipfile.ZipFile('/var/www/$d/app/EazyCount-v1.2.apk').read('assets/capacitor.config.json').decode()[:200])"
 done
 ```
 

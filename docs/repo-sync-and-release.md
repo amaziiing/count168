@@ -145,17 +145,17 @@ cd .. && git worktree remove count168-com-merge --force && git branch -D com-mer
 ```bash
 cd c168_mobile/app
 npm i                      # 首次：装 @capacitor/cli
-npm run build:apk:site     # → dist-apk/EazyCount-v1.1-site.apk
-npm run build:apk:org      # → dist-apk/EazyCount-v1.1-org.apk
-npm run build:apk:com      # → dist-apk/EazyCount-v1.1-com.apk
+npm run build:apk:site     # → dist-apk/EazyCount-v1.2-site.apk
+npm run build:apk:org      # → dist-apk/EazyCount-v1.2-org.apk
+npm run build:apk:com      # → dist-apk/EazyCount-v1.2-com.apk
 ```
 
 上传（**绝不跨域名复制**——包内 `server.url` 是写死的，放错了用户看到的就是别家的数据）：
 
 ```bash
-scp -i ~/.ssh/count168-ec2.pem dist-apk/EazyCount-v1.1-site.apk ec2-user@56.68.48.190:/var/www/count168/app/EazyCount-v1.1.apk
-scp -i ~/.ssh/count168-ec2.pem dist-apk/EazyCount-v1.1-org.apk  ec2-user@56.68.48.190:/var/www/count168.org/app/EazyCount-v1.1.apk
-scp -i ~/.ssh/count168-ec2.pem dist-apk/EazyCount-v1.1-com.apk  ec2-user@56.68.48.190:/var/www/count168.com/app/EazyCount-v1.1.apk
+scp -i ~/.ssh/count168-ec2.pem dist-apk/EazyCount-v1.2-site.apk ec2-user@56.68.48.190:/var/www/count168/app/EazyCount-v1.2.apk
+scp -i ~/.ssh/count168-ec2.pem dist-apk/EazyCount-v1.2-org.apk  ec2-user@56.68.48.190:/var/www/count168.org/app/EazyCount-v1.2.apk
+scp -i ~/.ssh/count168-ec2.pem dist-apk/EazyCount-v1.2-com.apk  ec2-user@56.68.48.190:/var/www/count168.com/app/EazyCount-v1.2.apk
 ```
 
 **必须做的验收**（解包看域名 + 线上 md5 对比本地）：
@@ -164,7 +164,7 @@ scp -i ~/.ssh/count168-ec2.pem dist-apk/EazyCount-v1.1-com.apk  ec2-user@56.68.4
 for f in dist-apk/*.apk; do
   printf "%-30s " "$f"; unzip -p "$f" assets/capacitor.config.json | tr -d '\n' | grep -o '"url": "[^"]*"'
 done
-curl -sS https://www.count168.com/app/EazyCount-v1.1.apk | md5sum   # 与本地 com 包一致
+curl -sS https://www.count168.com/app/EazyCount-v1.2.apk | md5sum   # 与本地 com 包一致
 ```
 
 发新版：改 `android/app/build.gradle` 的 `versionCode`/`versionName` → 三个域名各出一次包 → 各自上传新文件、删旧文件 → 更新 `install-page/index.html` 的版本文案与下载文件名。

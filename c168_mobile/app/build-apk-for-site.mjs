@@ -84,7 +84,9 @@ try {
   const apk = path.join(here, "android", "app", "build", "outputs", "apk", "release", "app-release.apk");
   const outDir = path.join(here, "dist-apk");
   fs.mkdirSync(outDir, { recursive: true });
-  const out = path.join(outDir, `EazyCount-v1.1-${key}.apk`);
+  const gradle = fs.readFileSync(path.join(here, "android", "app", "build.gradle"), "utf8");
+  const versionName = (gradle.match(/versionName\s+"([^"]+)"/) || [])[1] || "1.0";
+  const out = path.join(outDir, `EazyCount-v${versionName}-${key}.apk`);
   fs.copyFileSync(apk, out);
   console.log(`==> 产物: ${out}  (${(fs.statSync(out).size / 1048576).toFixed(2)} MB)`);
 } finally {
