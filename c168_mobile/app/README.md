@@ -3,6 +3,10 @@
 把手机版网页 `https://count168.site/c168_mobile/frontend/dist/` 封装成 Android App。
 方案:Capacitor 8 WebView 壳 + 远程 URL(`server.url`),登录 Cookie、SSE 实时推送与网页完全同源,后端零改动。
 
+> ⚠️ 现在是**按域名各出一份包**（site / org / com 的包各自指向自己的域名，数据各自独立）。
+> 三仓库（site → org → com）同步 + 发布 + 出包上传的完整流程见
+> [`docs/repo-sync-and-release.md`](../../docs/repo-sync-and-release.md)。
+
 ## 目录结构
 
 ```

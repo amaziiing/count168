@@ -210,6 +210,9 @@ push 到 **`main`** 后，GitHub Actions **Deploy to EC2** 会**并行**跑两�
 
 每次 deploy 还会自动把手机版下载页发布到站点的 `/app/`（源：仓库 `c168_mobile/app/install-page/`，脚本 `deploy/publish-app-page.sh`，APK 不进 git）——count168.site、www.count168.org 与 **www.count168.com** 都能下载电话版，详见 [`c168_mobile/app/README.md`](../c168_mobile/app/README.md#下载页install-page)。
 
+> 三仓库（site → org → com）的合并、发布、冲突处理与电话版出包上传的完整流程，见
+> [`docs/repo-sync-and-release.md`](../docs/repo-sync-and-release.md)。
+
 ### 一次性配置（GitHub → Settings → Secrets and variables → Actions）
 
 | Secret | 值 |
