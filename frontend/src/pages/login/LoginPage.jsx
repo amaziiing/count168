@@ -105,6 +105,17 @@ export default function LoginPage() {
   const langThumbRef = useRef(null);
   const prevLangRef = useRef(lang);
   const i18n = useMemo(() => LOGIN_I18N[lang] || LOGIN_I18N.en, [lang]);
+  // 手机浏览器开「桌面版网站」时也会落在这个页面：UA/视口都变成桌面，但触屏能力与
+  // screen.width（不随桌面模式变化）还是手机的 → 用它给这类用户一个下载 App 的提示。
+  const phoneDesktopMode = useMemo(() => {
+    try {
+      const touch = (navigator.maxTouchPoints || 0) > 0;
+      const narrowScreen = (window.screen?.width || 0) <= 900;
+      return touch && narrowScreen;
+    } catch {
+      return false;
+    }
+  }, []);
 
   useEffect(() => {
     setRole(roleFromUrl);
@@ -439,6 +450,14 @@ export default function LoginPage() {
           </div>
         )}
 
+        {phoneDesktopMode && (
+          <div className="sc-login-touch-hint">
+            <span>{i18n.desktopModeHint}</span>
+            <a href="/app/">{i18n.mobileAppDownload}</a>
+            <a href="/c168_mobile/login">{i18n.mobileSite}</a>
+          </div>
+        )}
+
         <div className="sc-login-card">
           <div className="sc-login-role-tabs">
             <button
@@ -550,6 +569,12 @@ export default function LoginPage() {
                     中
                   </button>
                 </div>
+              </div>
+
+              <div className="sc-login-app-row">
+                <a className="sc-login-app-link" href="/app/">
+                  {i18n.mobileApp} · <em>{i18n.mobileAppDownload}</em>
+                </a>
               </div>
             </form>
           </div>
