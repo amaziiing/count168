@@ -95,11 +95,14 @@
   /* Align main scroll content with sticky bar / bottom nav (32rem column) */
   --m-page-gutter: 0.875rem;
   --m-page-max-width: 32rem;
-  /* Android shell edge-to-edge lift — index.html sets --m-inset-b to 48px when
-     the WebView viewport is full-bleed; --m-letterbox cancels iOS standalone
-     bottom letterboxing; --m-safe-floor keeps 34px clear of the iPhone home
-     indicator when iOS standalone reports env(bottom)=0. All 0 in a browser. */
+  /* Android shell edge-to-edge lift — index.html sets --m-inset-b to 48px and
+     --m-inset-t to 32px when the WebView viewport is full-bleed (old shells that
+     do not pad the WebView; v1.2+ pads natively so these stay 0);
+     --m-letterbox cancels iOS standalone bottom letterboxing; --m-safe-floor keeps
+     34px clear of the iPhone home indicator when iOS standalone reports env(bottom)=0.
+     All 0 in a browser. */
   --m-inset-b: 0px;
+  --m-inset-t: 0px;
   --m-letterbox: 0px;
   --m-safe-floor: 0px;
   --m-safe-b: max(

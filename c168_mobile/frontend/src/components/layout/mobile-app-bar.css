@@ -4,7 +4,7 @@
   flex-shrink: 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background: var(--m-appbar-bg);
-  padding-top: max(6px, env(safe-area-inset-top, 0px));
+  padding-top: calc(max(6px, env(safe-area-inset-top, 0px)) + var(--m-inset-t, 0px));
 }
 
 .m-appbar-grid {
@@ -113,7 +113,7 @@
 /* Phone landscape: shorter app bar to reclaim vertical space */
 @media (orientation: landscape) and (max-height: 500px) {
   .m-appbar {
-    padding-top: max(4px, env(safe-area-inset-top, 0px));
+    padding-top: calc(max(4px, env(safe-area-inset-top, 0px)) + var(--m-inset-t, 0px));
   }
 
   .m-appbar-grid {

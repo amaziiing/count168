@@ -9,7 +9,7 @@
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  min-height: calc(100dvh - env(safe-area-inset-top, 0px) - 6.5rem - var(--m-shell-main-pad-bottom));
+  min-height: calc(100dvh - env(safe-area-inset-top, 0px) - var(--m-inset-t, 0px) - 6.5rem - var(--m-shell-main-pad-bottom));
 }
 
 .m-more-profile {
@@ -214,7 +214,7 @@
 @media (orientation: landscape) and (max-height: 500px) {
   .m-more-page--settings {
     min-height: calc(
-      100dvh - env(safe-area-inset-top, 0px) - 5.5rem - var(--m-shell-main-pad-bottom)
+      100dvh - env(safe-area-inset-top, 0px) - var(--m-inset-t, 0px) - 5.5rem - var(--m-shell-main-pad-bottom)
     );
   }
 }

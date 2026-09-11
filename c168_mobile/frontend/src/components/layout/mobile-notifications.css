@@ -47,7 +47,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem 1.25rem;
-  padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
+  padding-top: calc(env(safe-area-inset-top, 0px) + var(--m-inset-t, 0px) + 0.75rem);
 }
 
 .m-notify-title {
