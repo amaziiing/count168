@@ -208,7 +208,7 @@ push 到 **`main`** 后，GitHub Actions **Deploy to EC2** 会**并行**跑两�
 
 **EC2 上两个目录都要先 clone 好**（见「二点五」）。仅想单独重部署 org：Actions → **Deploy org to EC2** → Run workflow。
 
-每次 deploy 还会自动把手机版下载页发布到站点的 `/app/`（源：仓库 `c168_mobile/app/install-page/`，脚本 `deploy/publish-app-page.sh`，APK 不进 git）——count168.site 与 www.count168.org 都能下载电话版，详见 [`c168_mobile/app/README.md`](../c168_mobile/app/README.md#下载页install-page)。
+每次 deploy 还会自动把手机版下载页发布到站点的 `/app/`（源：仓库 `c168_mobile/app/install-page/`，脚本 `deploy/publish-app-page.sh`，APK 不进 git）——count168.site、www.count168.org 与 **www.count168.com** 都能下载电话版，详见 [`c168_mobile/app/README.md`](../c168_mobile/app/README.md#下载页install-page)。
 
 ### 一次性配置（GitHub → Settings → Secrets and variables → Actions）
 

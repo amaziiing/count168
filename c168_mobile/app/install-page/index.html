@@ -122,9 +122,12 @@
     var inWeChat = /MicroMessenger|QQ\//i.test(ua);
     var standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
 
-    // 二维码按域名区分：count168.org 用 org 下载页二维码（qr-org.png），其余用 qr.png
-    if (/(^|\.)count168\.org$/i.test(location.hostname)) {
+    // 二维码按域名区分：各域名用自己下载页的二维码（qr-org.png / qr-com.png），其余用 qr.png
+    var host = location.hostname;
+    if (/(^|\.)count168\.org$/i.test(host)) {
       document.getElementById("qr").src = "qr-org.png";
+    } else if (/(^|\.)count168\.com$/i.test(host)) {
+      document.getElementById("qr").src = "qr-com.png";
     }
 
     if (inWeChat) document.getElementById("wechatTip").classList.add("show");
