@@ -4,6 +4,7 @@ import MobileShell from "../../components/layout/MobileShell.jsx";
 import MobileSubpageHeader from "../../components/layout/MobileSubpageHeader.jsx";
 import MobileLangSwitch from "../../components/layout/MobileLangSwitch.jsx";
 import MobileThemeSwitch from "../../components/layout/MobileThemeSwitch.jsx";
+import { SITE_OPTIONS, currentSiteKey, switchSite } from "../../lib/siteSwitch.js";
 import { fetchJson } from "../../lib/fetchJson.js";
 import { useSyncedLoginLang, writeLoginLang } from "../../lib/loginLang.js";
 import { readLoginTheme, writeLoginTheme } from "../../lib/loginTheme.js";
@@ -28,6 +29,7 @@ export default function SettingsPage() {
   const [lang, setLangState] = useSyncedLoginLang();
   const [theme, setThemeState] = useState(() => readLoginTheme());
   const i18n = useMemo(() => MORE_I18N[lang] || MORE_I18N.en, [lang]);
+  const currentSite = currentSiteKey();
 
   const setLang = useCallback((next) => {
     setLangState(writeLoginLang(next));
@@ -126,6 +128,22 @@ export default function SettingsPage() {
                   lightLabel={i18n.themeLight}
                   darkLabel={i18n.themeDark}
                 />
+              </div>
+              <div className="m-more-settings-row">
+                <span>{i18n.site}</span>
+                <div className="m-more-site-list" role="group" aria-label={i18n.site}>
+                  {SITE_OPTIONS.map((site) => (
+                    <button
+                      key={site.key}
+                      type="button"
+                      className={`m-more-site-chip${currentSite === site.key ? " active" : ""}`}
+                      aria-pressed={currentSite === site.key}
+                      onClick={() => switchSite(site.key)}
+                    >
+                      {site.short}
+                    </button>
+                  ))}
+                </div>
               </div>
             </section>
 
