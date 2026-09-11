@@ -317,6 +317,25 @@ function stripTrailingRateSuffix(string $description): string
 }
 
 /**
+ * 从账户腿（RATE_FIRST_FROM/TO、RATE_TRANSFER_FROM/TO）的 description 里提取除法模式下
+ * 用户原始输入的除数文本（如 "Transaction from A1 (Rate: /1.7)" → "1.7"）。
+ * exchange_rate 列存的是该除数的倒数并被截断到 6 位小数，用它反推会有精度误差
+ * （如 1/0.588235 ≈ 1.70000085），MARKUP 相减时会跟 Rate-Mul 差 0.00000x，
+ * 因此优先用原始文本，避免二次取倒数造成的精度损失。
+ */
+function extractDivideRateDivisorText(?string $description): ?string
+{
+    if ($description === null || trim($description) === '') {
+        return null;
+    }
+    if (!preg_match('/\((?:Rate|RATE)\s*:\s*\/\s*([0-9]+(?:\.[0-9]+)?)\s*\)/i', $description, $m)) {
+        return null;
+    }
+    $value = trim($m[1]);
+    return $value !== '' ? $value : null;
+}
+
+/**
  * 将旧版 RATE 描述改为：
  * EXCH RATE {rate} {from} > {to} | TO/FROM {account}
  */
@@ -2651,7 +2670,13 @@ try {
                     u.name AS created_by_name,
                     o.owner_code AS created_by_owner_code,
                     o.name AS created_by_owner_name,
-                    em.description AS rate_middleman_entry_description
+                    em.description AS rate_middleman_entry_description,
+                    (SELECT eacc.description
+                       FROM transaction_entry eacc
+                      WHERE eacc.header_id = h.id
+                        AND eacc.entry_type IN ('RATE_FIRST_FROM', 'RATE_FIRST_TO', 'RATE_TRANSFER_FROM', 'RATE_TRANSFER_TO')
+                      ORDER BY eacc.id ASC
+                      LIMIT 1) AS rate_account_leg_description
                 FROM transaction_entry e
                 JOIN transactions h ON e.header_id = h.id
                 LEFT JOIN currency c ON e.currency_id = c.id
@@ -2698,28 +2723,24 @@ try {
         $description = $row['entry_description'] ?: 'RATE';
         $platformFeeRemark = null;
 
-        // RATE 后缀：第一段（RATE_FIRST_FROM / RATE_FIRST_TO）恒显示原始汇率，不做任何换算。
-        // 第二段 FROM 侧（RATE_TRANSFER_FROM）：divide 模式换算显示净汇率（exchange_rate -
-        // middleman_rate，逻辑不变），multiply 模式恒显示原始汇率。
-        // 第二段 TO 侧（RATE_TRANSFER_TO）：divide 模式恒显示原始汇率（不变），multiply 模式
-        // 直接显示用户输入的 Rate-Mul 原始值（不做减法）。
+        // RATE 后缀：业务上的 From Account（付款方）= RATE_FIRST_FROM、RATE_TRANSFER_TO；
+        // 业务上的 To Account（收款方）= RATE_FIRST_TO、RATE_TRANSFER_FROM —— 注意 RATE_TRANSFER_FROM/TO
+        // 这两个 entry_type 名字和账号绑定是反的（见 submit_api.php 对应注释）。
+        // 哪一边显示 Rate-Mul 取决于乘除模式，方向相反：
+        // - multiply 模式：To Account 显示 Rate-Mul（原样数字），From Account 显示原始汇率。
+        // - divide 模式：From Account 显示 Rate-Mul（原样 "/{除数}"），To Account 显示原始汇率。
+        // 差价（原汇率 − Rate-Mul）算 Middle-Man 的利润，不计入 From/To 两个 account 之间的汇兑描述，
+        // 所以未命中的一侧留空，交给 formatExchangeRateDescription 回退显示原始汇率。
         $displayRateForSuffix = null;
-        if ($entryType === 'RATE_TRANSFER_FROM') {
-            $exchangeRate = $row['exchange_rate'] ?? null;
+        if (in_array($entryType, ['RATE_FIRST_FROM', 'RATE_FIRST_TO', 'RATE_TRANSFER_FROM', 'RATE_TRANSFER_TO'], true)) {
             $middlemanRate = $row['rate_middleman_rate'] ?? null;
             $isDivideMode = (bool) preg_match('/\(\s*\/[^)]*\)/', (string) ($row['rate_middleman_entry_description'] ?? ''));
-            if ($isDivideMode && $exchangeRate !== null && $middlemanRate !== null) {
-                $netRate = money_sub($exchangeRate, $middlemanRate, 8);
-                if (money_cmp($netRate, '0') > 0) {
-                    // 保留最多 6 位小数，并去掉多余的 0
-                    $displayRateForSuffix = money_out($netRate, 6);
-                }
-            }
-        } elseif ($entryType === 'RATE_TRANSFER_TO') {
-            $middlemanRate = $row['rate_middleman_rate'] ?? null;
-            $isDivideMode = (bool) preg_match('/\(\s*\/[^)]*\)/', (string) ($row['rate_middleman_entry_description'] ?? ''));
-            if (!$isDivideMode && $middlemanRate !== null && $middlemanRate !== '') {
-                $displayRateForSuffix = money_out($middlemanRate, 6);
+            $isBusinessToAccount = in_array($entryType, ['RATE_FIRST_TO', 'RATE_TRANSFER_FROM'], true);
+            $showMiddlemanRateHere = $isDivideMode ? !$isBusinessToAccount : $isBusinessToAccount;
+            if ($showMiddlemanRateHere && $middlemanRate !== null && $middlemanRate !== '') {
+                $displayRateForSuffix = $isDivideMode
+                    ? ('/' . money_out($middlemanRate, 6))
+                    : money_out($middlemanRate, 6);
             }
         }
 
@@ -2741,8 +2762,13 @@ try {
             if ($markupRate !== null && $markupRate !== '' && $exchangeRateForMarkup !== null && $exchangeRateForMarkup !== '') {
                 $isDivideMode = (bool) preg_match('/\(\s*\/[^)]*\)/', $rawMiddleDesc);
                 if ($isDivideMode) {
-                    if (money_cmp($exchangeRateForMarkup, '0') > 0) {
+                    // 优先用账户腿 description 里保留的原始除数文本，避免对已截断到 6 位小数的
+                    // exchange_rate 二次取倒数造成的精度误差（如 1.71 − 1.70000085 ≠ 0.01）。
+                    $originalDivisor = extractDivideRateDivisorText($row['rate_account_leg_description'] ?? null);
+                    if ($originalDivisor === null && money_cmp($exchangeRateForMarkup, '0') > 0) {
                         $originalDivisor = money_div('1', $exchangeRateForMarkup, 8);
+                    }
+                    if ($originalDivisor !== null) {
                         $markupRate = money_sub($markupRate, $originalDivisor, 8);
                     }
                 } else {
@@ -2828,6 +2854,7 @@ try {
             'exchange_rate' => $row['exchange_rate'] ?? null,
             'rate_middleman_rate' => $row['rate_middleman_rate'] ?? null,
             'rate_middleman_entry_description' => $row['rate_middleman_entry_description'] ?? null,
+            'rate_markup_value' => $entryType === 'RATE_MIDDLEMAN' ? ($markupRate ?? null) : null,
             'entry_type' => $entryType
         ];
     }
@@ -2926,10 +2953,14 @@ try {
                 $entryType = $event['entry_type'] ?? '';
                 if ($entryType === 'RATE_MIDDLEMAN') {
                     // Middle-Man：显示 Markup (FROM amount > TO) Rate x
+                    // Rate 展示的是 Markup 差额（与 admin/Payment History 一致），不是 Rate-Mul 原始输入值。
                     $fromCode = $event['from_currency_code'] ?? null;
                     $toCode = $event['to_currency_code'] ?? null;
                     $fromAmount = $event['rate_from_amount'] ?? null;
-                    $middlemanRate = $event['rate_middleman_rate'] ?? null;
+                    $markupRateForDisplay = $event['rate_markup_value'] ?? null;
+                    if ($markupRateForDisplay === null || $markupRateForDisplay === '') {
+                        $markupRateForDisplay = $event['rate_middleman_rate'] ?? null;
+                    }
                     if ($fromCode && $toCode) {
                         $finalDescription = 'Markup (' . $fromCode;
                         if ($fromAmount !== null && $fromAmount !== '') {
@@ -2939,8 +2970,8 @@ try {
                             }
                         }
                         $finalDescription .= ' > ' . $toCode . ')';
-                        if ($middlemanRate !== null && $middlemanRate !== '') {
-                        $formattedRate = historyDisplayDecimal($middlemanRate, 6);
+                        if ($markupRateForDisplay !== null && $markupRateForDisplay !== '') {
+                        $formattedRate = historyDisplayDecimal($markupRateForDisplay, 6);
                             if ($formattedRate !== '') {
                                 $finalDescription .= ' Rate ' . $formattedRate;
                             }
@@ -2961,25 +2992,24 @@ try {
                     $isDivideMode = (bool) preg_match('/\(\s*\/[^)]*\)/', (string) ($event['rate_middleman_entry_description'] ?? ''));
 
                     $rateForSuffix = null;
+                    // divide 模式下需要与 admin/Payment History 一致，展示 Middle-Man 输入的原始除数
+                    // （如 "/1.71"），而不是 exchange_rate 存的倒数小数（如 "0.588235"）或净汇率计算值。
+                    $rateForSuffixIsExpression = false;
                     if (!in_array($entryType, ['RATE_FIRST_FROM', 'RATE_FIRST_TO'], true)) {
-                        if ($entryType === 'RATE_TRANSFER_FROM' && $isDivideMode) {
-                            $displayNet = null;
-                            if ($exchangeRate !== null && $exchangeRate !== ''
-                                && $middlemanRate !== null && (string) $middlemanRate !== '') {
-                                $netRate = money_sub($exchangeRate, $middlemanRate, 8);
-                                if (money_cmp($netRate, '0') > 0) {
-                                    $displayNet = money_out($netRate, 6);
-                                }
+                        if ($isDivideMode) {
+                            if ($middlemanRate !== null && (string) $middlemanRate !== '') {
+                                $rateForSuffix = '/' . money_out($middlemanRate, 6);
+                                $rateForSuffixIsExpression = true;
+                            } elseif ($exchangeRate !== null && $exchangeRate !== '' && money_cmp($exchangeRate, '0') > 0) {
+                                $rateForSuffix = '/' . money_out(money_div('1', $exchangeRate, 8), 6);
+                                $rateForSuffixIsExpression = true;
                             }
-                            $rateForSuffix = ($displayNet !== null && $displayNet !== '')
-                                ? $displayNet
-                                : (($exchangeRate !== null && $exchangeRate !== '') ? $exchangeRate : null);
-                        } elseif ($entryType === 'RATE_TRANSFER_TO' && !$isDivideMode) {
+                        } elseif ($entryType === 'RATE_TRANSFER_TO') {
                             $rateForSuffix = ($middlemanRate !== null && $middlemanRate !== '')
                                 ? money_out($middlemanRate, 6)
                                 : (($exchangeRate !== null && $exchangeRate !== '') ? $exchangeRate : null);
                         } else {
-                            // 其余情况（RATE_TRANSFER_FROM 乘法模式、RATE_TRANSFER_TO 除法模式、RATE_FEE 等）：使用原始汇率
+                            // 其余情况（RATE_TRANSFER_FROM 乘法模式、RATE_FEE 等）：使用原始汇率
                             $rateForSuffix = ($exchangeRate !== null && $exchangeRate !== '') ? $exchangeRate : null;
                         }
                     }
@@ -2994,7 +3024,9 @@ try {
                         }
                         $finalDescription .= ' > ' . $toCode . ')';
                         if ($rateForSuffix !== null && $rateForSuffix !== '') {
-                            $formattedRate = historyDisplayDecimal($rateForSuffix, 6);
+                            $formattedRate = $rateForSuffixIsExpression
+                                ? $rateForSuffix
+                                : historyDisplayDecimal($rateForSuffix, 6);
                             if ($formattedRate !== '') {
                                 $finalDescription .= ' Rate ' . $formattedRate;
                             }

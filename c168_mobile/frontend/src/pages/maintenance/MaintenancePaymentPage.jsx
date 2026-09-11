@@ -11,6 +11,9 @@ import {
   searchPaymentMaintenance,
 } from "../../lib/maintenanceApi.js";
 import { notifyTransactionListInvalidated } from "../../lib/transactionPaymentLogic.js";
+import { formatRangeLabel } from "../../lib/dashboardDateUtils.js";
+import { useRealtimeDomain } from "../../lib/realtime/useRealtimeDomain.js";
+import { REALTIME_DOMAINS } from "../../lib/realtime/realtimeEvents.js";
 import {
   maintenanceScopeIsReady,
   maintenanceScopeKey,
@@ -21,8 +24,15 @@ import {
   getMaintenanceText,
   PAYMENT_MAINTENANCE_TYPES,
 } from "../../translateFile/maintenanceTranslate.js";
+import { DASHBOARD_I18N } from "../../translateFile/dashboardTranslate.js";
+import { DateFilterChip } from "../dashboard/FilterChips.jsx";
 import { canAccessPaymentMaintenance } from "../../utils/mobilePermissions.js";
-import { MaintenanceFilterBar, MaintenanceFilterSheet, MaintenanceSearchBar } from "./MaintenanceSheets.jsx";
+import {
+  MaintenanceFilterSheet,
+  MaintenanceScopeChip,
+  MaintenanceSearchBar,
+  MaintenanceTypeChip,
+} from "./MaintenanceSheets.jsx";
 import "./maintenance.css";
 
 const SEARCH_FIELDS = [
@@ -74,9 +84,27 @@ export default function MaintenancePaymentPage() {
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [listLoading, setListLoading] = useState(false);
   const [listError, setListError] = useState("");
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [scopeSheetOpen, setScopeSheetOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  /** Dashboard DateFilterChip adapter — identical sheet & instant-apply. */
+  const dashI18n = useMemo(() => DASHBOARD_I18N[lang] || DASHBOARD_I18N.en, [lang]);
+  const dateDash = useMemo(
+    () => ({
+      dateFrom,
+      dateTo,
+      activePreset,
+      dateRangeText: formatRangeLabel(dateFrom, dateTo),
+      lang,
+      applyFilters: (next) => {
+        setDateFrom(next.dateFrom);
+        setDateTo(next.dateTo);
+        setActivePreset(next.activePreset || "");
+      },
+    }),
+    [dateFrom, dateTo, activePreset, lang],
+  );
 
   const seqRef = useRef(0);
   const scopeReady = maintenanceScopeIsReady(scope);
@@ -117,6 +145,12 @@ export default function MaintenancePaymentPage() {
     return () => ac.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.me, scopeCacheKey, dateFrom, dateTo, transactionType]);
+
+  /* Desktop parity: reload the list on maintenance realtime events. */
+  useRealtimeDomain(REALTIME_DOMAINS.MAINTENANCE, () => {
+    if (!s.me || !scopeReady) return;
+    loadList();
+  });
 
   const displayRows = useMemo(() => {
     const q = query.trim().toUpperCase();
@@ -164,25 +198,36 @@ export default function MaintenancePaymentPage() {
   const stickyBar = (
     <div className="m-mt-sticky">
       <MobileSubpageHeader
-        backTo="/maintenance"
-        backAriaLabel={i18n.backToHub}
+        backTo="/more"
+        backAriaLabel={i18n.backToMore || i18n.back || i18n.backToHub}
         title={i18n.payMaintenanceTitle}
       />
-      <MaintenanceFilterBar
-        i18n={i18n}
-        dateFrom={dateFrom}
-        dateTo={dateTo}
-        groupMode={s.groupMode}
-        selectedGroup={s.selectedGroup}
-        selectedCompany={s.selectedCompany}
-        onOpen={() => setFilterOpen(true)}
-      />
-      <MaintenanceSearchBar
-        value={query}
-        onChange={setQuery}
-        placeholder={i18n.searchPlaceholder}
-        clearAriaLabel={i18n.reset}
-      />
+      <div className="m-fchip-row">
+        <div className="m-fchip-bar">
+          <DateFilterChip dash={dateDash} i18n={dashI18n} lang={lang} />
+          <MaintenanceScopeChip
+            i18n={i18n}
+            groupMode={s.groupMode}
+            selectedGroup={s.selectedGroup}
+            selectedCompany={s.selectedCompany}
+            onOpen={() => setScopeSheetOpen(true)}
+          />
+        </div>
+      </div>
+      <div className="m-mt-searchrow">
+        <MaintenanceTypeChip
+          i18n={i18n}
+          types={PAYMENT_MAINTENANCE_TYPES}
+          value={transactionType}
+          onChange={setTransactionType}
+        />
+        <MaintenanceSearchBar
+          value={query}
+          onChange={setQuery}
+          placeholder={i18n.searchPlaceholder}
+          clearAriaLabel={i18n.reset}
+        />
+      </div>
     </div>
   );
 
@@ -201,12 +246,13 @@ export default function MaintenancePaymentPage() {
       stickyBar={stickyBar}
       lang={s.lang}
       onLangChange={s.setLang}
-      overlayOpen={filterOpen || confirmOpen}
+      overlayOpen={scopeSheetOpen || confirmOpen}
       overlay={
         <>
           <MaintenanceFilterSheet
-            open={filterOpen}
-            onClose={() => setFilterOpen(false)}
+            section="scope"
+            open={scopeSheetOpen}
+            onClose={() => setScopeSheetOpen(false)}
             i18n={i18n}
             dateFrom={dateFrom}
             dateTo={dateTo}
@@ -217,7 +263,6 @@ export default function MaintenancePaymentPage() {
             companies={s.companies}
             groupIds={s.groupIds}
             allowedGroupIds={s.allowedGroupIds}
-            types={PAYMENT_MAINTENANCE_TYPES}
             transactionType={transactionType}
             onApply={async (next) => {
               const scopeChanged =
@@ -295,10 +340,25 @@ export default function MaintenancePaymentPage() {
 
       {selectedCount > 0 ? (
         <div className="m-mt-actionbar">
-          <span>{getMaintenanceText(lang, "selectedCount", { n: selectedCount })}</span>
-          <button type="button" className="m-mt-delete-btn tap-scale" onClick={() => setConfirmOpen(true)}>
-            <i className="fas fa-trash" aria-hidden="true" /> {i18n.delete}
-          </button>
+          <span className="m-mt-actionbar-count">
+            <span className="m-mt-actionbar-check" aria-hidden="true">
+              <i className="fas fa-check" />
+            </span>
+            {getMaintenanceText(lang, "selectedCount", { n: selectedCount })}
+          </span>
+          <div className="m-mt-actionbar-actions">
+            <button
+              type="button"
+              className="m-mt-clear-btn tap-scale"
+              onClick={() => setSelectedIds(new Set())}
+              aria-label={i18n.cancel}
+            >
+              <i className="fas fa-xmark" aria-hidden="true" />
+            </button>
+            <button type="button" className="m-mt-delete-btn tap-scale" onClick={() => setConfirmOpen(true)}>
+              <i className="fas fa-trash" aria-hidden="true" /> {i18n.delete}
+            </button>
+          </div>
         </div>
       ) : null}
     </MobileShell>

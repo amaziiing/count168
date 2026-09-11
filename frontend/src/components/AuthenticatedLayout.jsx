@@ -1235,6 +1235,7 @@ export default function AuthenticatedLayout() {
   const showFullMaintenanceMenu = canAccessFullMaintenance(me);
   const showLimitedMaintenanceMenu = canAccessLimitedMaintenance(me);
   const showMaintenanceMenu = showMaintenanceInSidebar(me);
+  const isBankOnlyCategory = Boolean(me?.company_has_bank) && !me?.company_has_gambling;
   const showCaptureMaintenance = useMemo(() => {
     void sidebarGcTick;
     return canAccessCaptureMaintenance(me);
@@ -1324,6 +1325,24 @@ export default function AuthenticatedLayout() {
     if (fallback) return <Navigate to={fallback} replace />;
   }
 
+  /* Numbered sidebar menu: permissions hide items per user, so numbers must follow
+     the items actually visible. They are assigned while the JSX below evaluates in
+     visual order — each visible top-level item calls sidebarSeqLabel, and its flyout
+     children call sidebarSubSeqLabel with the same key. */
+  const sidebarSeqState = { top: 0, sub: {} };
+  const sidebarSeqLabel = (key, label) => {
+    sidebarSeqState.top += 1;
+    sidebarSeqState[key] = sidebarSeqState.top;
+    sidebarSeqState.sub[key] = 0;
+    return `${sidebarSeqState.top}. ${label}`;
+  };
+  const sidebarSubSeqLabel = (key, label) => {
+    const parentNo = sidebarSeqState[key];
+    if (!parentNo) return label;
+    sidebarSeqState.sub[key] += 1;
+    return `${parentNo}.${sidebarSeqState.sub[key]} ${label}`;
+  };
+
   return (
     <AuthSessionProvider value={sessionContextValue}>
     <>
@@ -1401,7 +1420,7 @@ export default function AuthenticatedLayout() {
                   <svg className="section-icon" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
                   </svg>
-                  <span className="sidebar-menu-label">{i18n.sidebarHome}</span>
+                  <span className="sidebar-menu-label">{sidebarSeqLabel("home", i18n.sidebarHome)}</span>
                 </SidebarSectionLink>
               </SidebarNavTip>
             </div>
@@ -1417,7 +1436,7 @@ export default function AuthenticatedLayout() {
                   <svg className="section-icon" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm6.93 8h-3.46c-.14-2.01-.5-3.88-1.06-5.38 2.16.76 3.76 2.62 4.52 5.38zm-6.93 0h-4.9c.13-1.78.58-3.51 1.28-4.9.53-1.04 1.16-1.79 1.78-2.21.6-.41.98-.46 1.84-.46v7.57zm0 2v7.57c-.86 0-1.24-.05-1.84-.46-.62-.43-1.25-1.17-1.78-2.21-.7-1.39-1.15-3.12-1.28-4.9h4.9zm2 7.43V12h4.9c-.13 1.78-.58 3.51-1.28 4.9-.53 1.04-1.16 1.79-1.78 2.21-.6.41-.98.46-1.84.46zm0-9.43V4.43c.86 0 1.24.05 1.84.46.62.43 1.25 1.17 1.78 2.21.7 1.39 1.15 3.12 1.28 4.9h-4.9zM5.07 12h3.46c.14 2.01.5 3.88 1.06 5.38-2.16-.76-3.76-2.62-4.52-5.38z" />
                   </svg>
-                  <span className="sidebar-menu-label">{i18n.sidebarDomain}</span>
+                  <span className="sidebar-menu-label">{sidebarSeqLabel("domain", i18n.sidebarDomain)}</span>
                 </SidebarSectionLink>
               </SidebarNavTip>
             </div>
@@ -1433,7 +1452,7 @@ export default function AuthenticatedLayout() {
                   <svg className="section-icon" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />
                   </svg>
-                  <span className="sidebar-menu-label">{i18n.sidebarAnnouncement}</span>
+                  <span className="sidebar-menu-label">{sidebarSeqLabel("announcement", i18n.sidebarAnnouncement)}</span>
                 </SidebarSectionLink>
               </SidebarNavTip>
             </div>
@@ -1450,7 +1469,7 @@ export default function AuthenticatedLayout() {
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z" />
                   </svg>
                   <span className="sidebar-menu-label-wrap">
-                    <span className="sidebar-menu-label">{i18n.sidebarAutoRenew}</span>
+                    <span className="sidebar-menu-label">{sidebarSeqLabel("autoRenew", i18n.sidebarAutoRenew)}</span>
                     {me?.pending_auto_renew_count > 0 ? (
                       <span className="sidebar-pending-badge" aria-label={`${me.pending_auto_renew_count} pending`}>
                         {me.pending_auto_renew_count}
@@ -1472,7 +1491,7 @@ export default function AuthenticatedLayout() {
                   <svg className="section-icon" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
                   </svg>
-                  <span className="sidebar-menu-label">{i18n.sidebarAdmin}</span>
+                  <span className="sidebar-menu-label">{sidebarSeqLabel("admin", i18n.sidebarAdmin)}</span>
                 </SidebarSectionLink>
               </SidebarNavTip>
             </div>
@@ -1488,7 +1507,7 @@ export default function AuthenticatedLayout() {
                   <svg className="section-icon" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                   </svg>
-                  <span className="sidebar-menu-label">{i18n.sidebarAccount}</span>
+                  <span className="sidebar-menu-label">{sidebarSeqLabel("account", i18n.sidebarAccount)}</span>
                 </SidebarSectionLink>
               </SidebarNavTip>
             </div>
@@ -1504,7 +1523,7 @@ export default function AuthenticatedLayout() {
                   <svg className="section-icon" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
                   </svg>
-                  <span className="sidebar-menu-label">{i18n.sidebarOwnership}</span>
+                  <span className="sidebar-menu-label">{sidebarSeqLabel("ownership", i18n.sidebarOwnership)}</span>
                 </SidebarSectionLink>
               </SidebarNavTip>
             </div>
@@ -1521,7 +1540,7 @@ export default function AuthenticatedLayout() {
                   <svg className="section-icon" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                   </svg>
-                  <span className="sidebar-menu-label">{i18n.sidebarProcess}</span>
+                  <span className="sidebar-menu-label">{sidebarSeqLabel("process", i18n.sidebarProcess)}</span>
                 </SidebarSectionLink>
               </SidebarNavTip>
             </div>
@@ -1542,7 +1561,7 @@ export default function AuthenticatedLayout() {
                   <svg className="section-icon" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" />
                   </svg>
-                  <span className="sidebar-menu-label">{i18n.sidebarDataCapture}</span>
+                  <span className="sidebar-menu-label">{sidebarSeqLabel("datacapture", i18n.sidebarDataCapture)}</span>
                 </SidebarSectionLink>
               </SidebarNavTip>
             </div>
@@ -1558,7 +1577,7 @@ export default function AuthenticatedLayout() {
                   <svg className="section-icon" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z" />
                   </svg>
-                  <span className="sidebar-menu-label">{i18n.sidebarTransactionPayment}</span>
+                  <span className="sidebar-menu-label">{sidebarSeqLabel("payment", i18n.sidebarTransactionPayment)}</span>
                 </SidebarSectionLink>
               </SidebarNavTip>
             </div>
@@ -1582,7 +1601,7 @@ export default function AuthenticatedLayout() {
                     <svg className="section-icon" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h8c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
                     </svg>
-                    <span className="sidebar-menu-label">{i18n.sidebarReport}</span>
+                    <span className="sidebar-menu-label">{sidebarSeqLabel("report", i18n.sidebarReport)}</span>
                     <span className="section-arrow">▶</span>
                   </div>
                 </SidebarNavTip>
@@ -1601,14 +1620,14 @@ export default function AuthenticatedLayout() {
                     className={`submenu-item ${pageKey === "customer-report" ? "current-page" : ""}`}
                     data-prefetch-path="/customer-report"
                   >
-                    <span>{i18n.sidebarCustomerReport}</span>
+                    <span>{sidebarSubSeqLabel("report", i18n.sidebarCustomerReport)}</span>
                   </a>
                   <a
                     {...sidebarSubmenuLinkProps("/domain-report", goTo)}
                     className={`submenu-item ${pageKey === "domain-report" ? "current-page" : ""}`}
                     data-prefetch-path="/domain-report"
                   >
-                    <span>{i18n.sidebarDomainReport}</span>
+                    <span>{sidebarSubSeqLabel("report", i18n.sidebarDomainReport)}</span>
                   </a>
                 </SidebarFlyoutSubmenu>
               </div>
@@ -1633,7 +1652,7 @@ export default function AuthenticatedLayout() {
                     <svg className="section-icon" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z" />
                     </svg>
-                    <span className="sidebar-menu-label">{i18n.sidebarMaintenance}</span>
+                    <span className="sidebar-menu-label">{sidebarSeqLabel("maintenance", i18n.sidebarMaintenance)}</span>
                     <span className="section-arrow">▶</span>
                   </div>
                 </SidebarNavTip>
@@ -1653,17 +1672,18 @@ export default function AuthenticatedLayout() {
                         className={`submenu-item ${pageKey === "capture-maintenance" ? "current-page" : ""}`}
                         data-prefetch-path="/capture-maintenance"
                       >
-                        <span>{i18n.sidebarDataCapture}</span>
+                        <span>{sidebarSubSeqLabel("maintenance", i18n.sidebarDataCapture)}</span>
                       </a>
                     )}
                     {(me?.company_has_gambling || me?.company_has_bank) &&
-                      (showFullMaintenanceMenu || showLimitedMaintenanceMenu) && (
+                      (showFullMaintenanceMenu || showLimitedMaintenanceMenu) &&
+                      !isBankOnlyCategory && (
                       <a
                         {...sidebarSubmenuLinkProps("/transaction-maintenance", goTo)}
                         className={`submenu-item ${pageKey === "transaction-maintenance" ? "current-page" : ""}`}
                         data-prefetch-path="/transaction-maintenance"
                       >
-                        <span>{i18n.sidebarTransaction}</span>
+                        <span>{sidebarSubSeqLabel("maintenance", i18n.sidebarTransaction)}</span>
                       </a>
                     )}
                     {showFullMaintenanceMenu && (me?.company_has_gambling || me?.company_has_bank) && (
@@ -1672,16 +1692,18 @@ export default function AuthenticatedLayout() {
                         className={`submenu-item ${pageKey === "payment-maintenance" ? "current-page" : ""}`}
                         data-prefetch-path="/payment-maintenance"
                       >
-                        <span>{i18n.sidebarPayment}</span>
+                        <span>{sidebarSubSeqLabel("maintenance", i18n.sidebarPayment)}</span>
                       </a>
                     )}
-                    {(me?.company_has_gambling || me?.company_has_bank) && (showFullMaintenanceMenu || showLimitedMaintenanceMenu) && (
+                    {(me?.company_has_gambling || me?.company_has_bank) &&
+                      (showFullMaintenanceMenu || showLimitedMaintenanceMenu) &&
+                      !isBankOnlyCategory && (
                       <a
                         {...sidebarSubmenuLinkProps("/formula-maintenance", goTo)}
                         className={`submenu-item ${pageKey === "formula-maintenance" ? "current-page" : ""}`}
                         data-prefetch-path="/formula-maintenance"
                       >
-                        <span>{i18n.sidebarFormula}</span>
+                        <span>{sidebarSubSeqLabel("maintenance", i18n.sidebarFormula)}</span>
                       </a>
                     )}
                     {showFullMaintenanceMenu && showBankprocessMaintenance && (
@@ -1690,7 +1712,7 @@ export default function AuthenticatedLayout() {
                         className={`submenu-item ${pageKey === "bankprocess-maintenance" ? "current-page" : ""}`}
                         data-prefetch-path="/bankprocess-maintenance"
                       >
-                        <span>{i18n.sidebarBankProcess}</span>
+                        <span>{sidebarSubSeqLabel("maintenance", i18n.sidebarBankProcess)}</span>
                       </a>
                     )}
                 </SidebarFlyoutSubmenu>

@@ -8,7 +8,7 @@ import {
   resolveMobileGroupIds,
 } from "../lib/dashboardScope.js";
 import { fetchJson, assertApiOk } from "../lib/fetchJson.js";
-import { readLoginLang, writeLoginLang } from "../lib/loginLang.js";
+import { useSyncedLoginLang, writeLoginLang } from "../lib/loginLang.js";
 import { canUseGroupOnlyMode, filterCompaniesForUserScope } from "../lib/loginScope.js";
 import { accountScopeIsGroupOnly, resolveAccountScopeDraft } from "../lib/mobileAccountScope.js";
 import { isPartnershipAuditReadOnlyLocked } from "../lib/partnershipAuditReadOnly.js";
@@ -52,6 +52,7 @@ const EMPTY_FORM = {
   email: "",
   role: "",
   password: "",
+  secondary_password: "",
   status: "active",
   read_only: true,
 };
@@ -75,7 +76,7 @@ async function postUserlist(body, signal) {
 
 export function useMobileAdminUsers() {
   const navigate = useNavigate();
-  const [lang, setLangState] = useState(() => readLoginLang());
+  const [lang, setLangState] = useSyncedLoginLang();
   const i18n = useMemo(() => adminText(lang), [lang]);
   const [me, setMe] = useState(null);
   const [companies, setCompanies] = useState([]);
@@ -111,6 +112,37 @@ export function useMobileAdminUsers() {
   const toastTimer = useRef(null);
   const listSeq = useRef(0);
 
+  /** Dirty check: snapshot the freshly-seeded form; only a real user edit
+      makes close ask "discard unsaved changes?". openCreate/openEdit arm the
+      baseline AFTER their async seeds land (batched into one commit). */
+  const [formBaseline, setFormBaseline] = useState("");
+  const [baselinePending, setBaselinePending] = useState(false);
+  const formSignature = useMemo(
+    () =>
+      JSON.stringify({
+        f: form,
+        p: [...permSelected].sort(),
+        a: [...selectedAccountIds].sort((x, y) => x - y),
+        pr: [...selectedProcessIds].sort((x, y) => x - y),
+        tg: [...selectedTenantGroupIds].sort((x, y) => x - y),
+        tc: [...selectedTenantCompanyIds].sort((x, y) => x - y),
+      }),
+    [
+      form,
+      permSelected,
+      selectedAccountIds,
+      selectedProcessIds,
+      selectedTenantGroupIds,
+      selectedTenantCompanyIds,
+    ],
+  );
+  useEffect(() => {
+    if (!baselinePending) return;
+    setFormBaseline(formSignature);
+    setBaselinePending(false);
+  }, [baselinePending, formSignature]);
+  const isFormDirty = !baselinePending && formBaseline !== formSignature;
+
   const scope = useMemo(
     () => ({ companyId, selectedGroup, groupsAllMode, groupAllMode }),
     [companyId, selectedGroup, groupsAllMode, groupAllMode],
@@ -127,6 +159,11 @@ export function useMobileAdminUsers() {
   const selectedCompany = useMemo(
     () => companies.find((row) => Number(row.id) === Number(companyId)) || null,
     [companies, companyId],
+  );
+  /** Desktop parity: secondary password only for C168 company scopes or owner-shadow rows. */
+  const isC168Company = useMemo(
+    () => String(selectedCompany?.company_id || "").toUpperCase() === "C168",
+    [selectedCompany],
   );
   const groupOnlyMode = accountScopeIsGroupOnly(scope);
   const mutationsBlocked = isPartnershipAuditReadOnlyLocked(me);
@@ -453,8 +490,10 @@ export function useMobileAdminUsers() {
       setSelectedProcessIds(new Set(processes.map((p) => p.id)));
       setSuperiorClosedAccountIds(new Set());
       setSuperiorClosedProcessIds(new Set());
+      setBaselinePending(true);
       return true;
     } catch (e) {
+      setBaselinePending(true);
       notify(e?.message || i18n.loadError, "error");
       return false;
     }
@@ -473,33 +512,34 @@ export function useMobileAdminUsers() {
     useDualTenantPicker,
   ]);
 
-  const openEdit = useCallback(async () => {
-    if (!detail) return false;
+  const openEdit = useCallback(async (source) => {
+    const target = source || detail;
+    if (!target) return false;
     if (!canMutate) {
       notify(mutationsBlocked ? i18n.readOnly : i18n.singleCompanyRequired, "error");
       return false;
     }
-    if (!rowCaps(detail).canEditDelete) return false;
-    setEditingRow(detail);
+    if (!rowCaps(target).canEditDelete) return false;
+    setEditingRow(target);
     setForm({
-      id: detail.id,
-      login_id: String(detail.login_id || ""),
-      name: String(detail.name || ""),
-      email: String(detail.email || ""),
-      role: normRole(detail.role),
+      id: target.id,
+      login_id: String(target.login_id || ""),
+      name: String(target.name || ""),
+      email: String(target.email || ""),
+      role: normRole(target.role),
       password: "",
-      status: normRole(detail.status) || "active",
-      read_only: Number(detail.read_only ?? 1) === 1,
+      status: normRole(target.status) || "active",
+      read_only: Number(target.read_only ?? 1) === 1,
     });
-    setPermSelected(new Set(parseJsonArray(detail.permissions)));
-    if (useDualTenantPicker && !detail.is_owner_shadow) {
+    setPermSelected(new Set(parseJsonArray(target.permissions)));
+    if (useDualTenantPicker && !target.is_owner_shadow) {
       setSelectedTenantGroupIds(
-        new Set(resolveAdminGroupEntityIds(tenantGroupOptions, parseJsonArray(detail.group_codes))),
+        new Set(resolveAdminGroupEntityIds(tenantGroupOptions, parseJsonArray(target.group_codes))),
       );
       const allowedCompanies = new Set(tenantCompanyOptions.map((row) => Number(row.id)));
       setSelectedTenantCompanyIds(
         new Set(
-          parseJsonArray(detail.company_ids)
+          parseJsonArray(target.company_ids)
             .map(Number)
             .filter((id) => allowedCompanies.has(id)),
         ),
@@ -511,19 +551,21 @@ export function useMobileAdminUsers() {
     try {
       const { accounts, processes } = await loadFormOptions();
       const accPartition = partitionAccessRows(
-        parseAccessPermissionRaw(detail.account_permissions),
+        parseAccessPermissionRaw(target.account_permissions),
         accounts,
       );
       const procPartition = partitionAccessRows(
-        parseAccessPermissionRaw(detail.process_permissions),
+        parseAccessPermissionRaw(target.process_permissions),
         processes,
       );
       setSelectedAccountIds(accPartition.selected);
       setSuperiorClosedAccountIds(accPartition.superiorClosed);
       setSelectedProcessIds(procPartition.selected);
       setSuperiorClosedProcessIds(procPartition.superiorClosed);
+      setBaselinePending(true);
       return true;
     } catch (e) {
+      setBaselinePending(true);
       notify(e?.message || i18n.loadError, "error");
       return false;
     }
@@ -591,6 +633,14 @@ export function useMobileAdminUsers() {
       company_id: Number(companyId),
     };
     if (form.password.trim()) payload.password = form.password;
+    const allowSecondaryPassword = isC168Company || ownerShadow;
+    if (allowSecondaryPassword && form.secondary_password?.trim()) {
+      if (!/^\d{6}$/.test(form.secondary_password.trim())) {
+        notify(i18n.secondaryPasswordMustBe6Digits, "error");
+        return false;
+      }
+      payload.secondary_password = form.secondary_password.trim();
+    }
     if (showReadOnlyToggle) payload.read_only = form.read_only ? 1 : 0;
     const isAdminOrOwner = currentUserRole === "admin" || currentUserRole === "owner";
     if (useDualTenantPicker && !ownerShadow) {
@@ -675,6 +725,7 @@ export function useMobileAdminUsers() {
     groupsAllMode,
     groupAllMode,
     selectedCompany,
+    isC168Company,
     groupIds,
     companiesForPicker: companiesForPicker(companies, {
       selectedGroup,
@@ -737,6 +788,7 @@ export function useMobileAdminUsers() {
     openCreate,
     openEdit,
     saveUser,
+    isFormDirty,
     saving,
     logout,
     notify,

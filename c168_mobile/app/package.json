@@ -1,0 +1,22 @@
+{
+  "name": "c168-mobile-shell",
+  "version": "1.0.0",
+  "description": "EazyCount Android shell (Capacitor WebView) wrapping https://count168.site/c168_mobile/frontend/dist/",
+  "private": true,
+  "scripts": {
+    "open:android": "npx cap open android",
+    "sync": "npx cap sync android",
+    "splash": "node make-splash.mjs && npx @capacitor/assets generate --android --assetPath assets --iconBackgroundColor '#ffffff' --splashBackgroundColor '#ffffff'",
+    "build:apk": "cd android && gradlew.bat assembleRelease",
+    "build:apk:debug": "cd android && gradlew.bat assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.1",
+    "@capacitor/core": "^8.5.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.1",
+    "qrcode": "^1.5.4",
+    "sharp": "^0.35.4"
+  }
+}

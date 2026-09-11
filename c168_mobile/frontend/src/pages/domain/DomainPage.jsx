@@ -3,7 +3,7 @@ import MobileShell from "../../components/layout/MobileShell.jsx";
 import MobileSubpageHeader from "../../components/layout/MobileSubpageHeader.jsx";
 import { useIncrementalList } from "../../hooks/useIncrementalList.js";
 import { useMobileDomain } from "../../hooks/useMobileDomain.js";
-import { MAX_VISIBLE_CHIPS, forceSearchValue } from "../../lib/domainHelpers.js";
+import { forceSearchValue } from "../../lib/domainHelpers.js";
 import {
   DomainConfirmSheet,
   DomainExpirationSheet,
@@ -15,36 +15,11 @@ import "./domain.css";
 
 const LONG_PRESS_MS = 480;
 
-function resolveGroupsFull(domain) {
-  if (Array.isArray(domain?.groups_full) && domain.groups_full.length > 0) {
-    return domain.groups_full;
-  }
-  const raw = String(domain?.group_ids || "").trim();
-  if (!raw) return [];
-  return raw
-    .split(",")
-    .map((s) => s.trim().toUpperCase())
-    .filter(Boolean)
-    .map((group_code) => ({ group_code, expiration_date: null }));
-}
-
-function DomainCard({ domain, domainApi, onEdit, onCompanyExp, onGroupExp, onLongPressSelect }) {
-  const { i18n, t, selectMode, checkedIds, toggleChecked, isDeletable } = domainApi;
-  const companiesFull = Array.isArray(domain.companies_full) ? domain.companies_full : [];
-  const companyList = companiesFull.map((c) => c.company_id).filter(Boolean);
-  const groupsFull = resolveGroupsFull(domain);
-  const groupList = groupsFull.map((g) => g.group_code).filter(Boolean);
-
-  const groupBudget = Math.min(groupList.length, MAX_VISIBLE_CHIPS);
-  const visibleGroups = groupList.slice(0, groupBudget);
-  const companyBudget = Math.max(0, MAX_VISIBLE_CHIPS - visibleGroups.length);
-  const visibleCompanies = companyList.slice(0, companyBudget);
-  const hiddenCount =
-    groupList.length - visibleGroups.length + (companyList.length - visibleCompanies.length);
+function DomainCard({ domain, domainApi, onEdit, onLongPressSelect }) {
+  const { i18n, selectMode, checkedIds, toggleChecked, isDeletable } = domainApi;
 
   const deletable = isDeletable(domain);
   const checked = checkedIds.has(domain.id);
-  const hasChips = groupList.length > 0 || companyList.length > 0;
 
   const pressTimer = useRef(null);
   const longPressed = useRef(false);
@@ -110,71 +85,9 @@ function DomainCard({ domain, domainApi, onEdit, onCompanyExp, onGroupExp, onLon
           </span>
           <span className="m-account-card-copy">
             <strong>{String(domain.owner_code || "").toUpperCase()}</strong>
-            <span>{String(domain.name || "").toUpperCase()}</span>
-            <small>{String(domain.email || "").toLowerCase()}</small>
           </span>
           {!selectMode ? <i className="fas fa-chevron-right" aria-hidden="true" /> : null}
         </button>
-      </div>
-
-      {hasChips ? (
-        <div className="m-domain-chips-bar">
-          {visibleGroups.length > 0 ? (
-            <div className="m-domain-chip-lane">
-              <span className="m-domain-chip-cat m-domain-chip-cat--group">{t("groupChipLabel")}</span>
-              <div className="m-domain-chip-row">
-                {visibleGroups.map((gid) => (
-                  <button
-                    key={`g-${gid}`}
-                    type="button"
-                    className="m-domain-chip m-domain-chip--group tap-scale"
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={() => onGroupExp(groupsFull)}
-                  >
-                    {gid}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-          {visibleCompanies.length > 0 || (hiddenCount > 0 && companyList.length > 0) ? (
-            <div className="m-domain-chip-lane">
-              <span className="m-domain-chip-cat">{t("companyChipLabel")}</span>
-              <div className="m-domain-chip-row">
-                {visibleCompanies.map((cid) => (
-                  <button
-                    key={`c-${cid}`}
-                    type="button"
-                    className="m-domain-chip tap-scale"
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={() => onCompanyExp(companiesFull)}
-                  >
-                    {cid}
-                  </button>
-                ))}
-                {hiddenCount > 0 ? (
-                  <button
-                    type="button"
-                    className="m-domain-chip m-domain-chip--more tap-scale"
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={() => {
-                      if (companyList.length > visibleCompanies.length) onCompanyExp(companiesFull);
-                      else onGroupExp(groupsFull);
-                    }}
-                  >
-                    +{hiddenCount}
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      <div className="m-account-card-actions m-domain-card-foot">
-        <span className="m-domain-created">
-          {t("createdBy")} {String(domain.created_by || "—").toUpperCase()}
-        </span>
       </div>
     </article>
   );

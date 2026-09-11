@@ -1,19 +1,39 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { usePullToRefresh } from "../../hooks/usePullToRefresh.js";
 import { useDirectScrollChrome } from "../../hooks/useDirectScrollChrome.js";
 import { useScrollIdleVisible } from "../../hooks/useScrollIdleVisible.js";
 import { isMobileMoreStackPath } from "../../utils/mobilePermissions.js";
+import {
+  notifySeenOwnerKey,
+  readNotifySeen,
+  saveNotifySeen,
+} from "../../lib/notifySeenStore.js";
+import {
+  useSyncedLoginLang,
+  writeLoginLang,
+} from "../../lib/loginLang.js";
+import {
+  THEME_UPDATED_EVENT,
+  readLoginTheme,
+  writeLoginTheme,
+} from "../../lib/loginTheme.js";
 import MobileAppBar from "./MobileAppBar.jsx";
 import MobileNotifications, { fetchMobileAnnouncements } from "./MobileNotifications.jsx";
 import PullRefreshIndicator from "./PullRefreshIndicator.jsx";
 import "./mobile-shell.css";
+
+/** Bell badge = announcements not yet seen this session. Seen ids persist in
+    localStorage keyed by "<user>:<day>" — the badge reappears on the next
+    login / day (PWA webviews never reload, so a module-scope Set would keep
+    the badge hidden forever), and clears once the panel has been opened. */
 
 export default function MobileShell({
   children,
   overlay = null,
   stickyBar = null,
   floatingAction = null,
+  appBarLeftAction = null,
   onMainScrollStart,
   i18n,
   me,
@@ -23,22 +43,62 @@ export default function MobileShell({
   onChromeOpen,
   overlayOpen = false,
 }) {
-  const { pathname } = useLocation();
+  const { pathname, key: locationKey } = useLocation();
+  const navigate = useNavigate();
   const navVisible = showBottomNav && !isMobileMoreStackPath(pathname);
+  /** Hub-child pages (opened from More) get a floating Back pill once scrolled. */
+  const isSubpage = isMobileMoreStackPath(pathname) && pathname !== "/more";
   const labels = {
     navHome: "Home",
     navReport: "Report",
     navTransaction: "Transaction",
     navAccount: "Account",
     navMore: "More",
+    backToTop: "Back to top",
+    back: "Back",
     ...(i18n || {}),
   };
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [announcements, setAnnouncements] = useState([]);
   const [notifyLoading, setNotifyLoading] = useState(false);
+  const [seenIds, setSeenIds] = useState(() => new Set());
+  const seenIdsRef = useRef(new Set());
+  const notifyOwnerKeyRef = useRef("");
+  const [theme, setTheme] = useState(() => readLoginTheme());
+  const [lang, setLang] = useSyncedLoginLang();
   const mainRef = useRef(null);
   const topChromeRef = useRef(null);
   const [topChromeH, setTopChromeH] = useState(118);
+  /** Back-to-top appears above the FAB once the page is scrolled well past the top. */
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [stickyScrolled, setStickyScrolled] = useState(false);
+  /** Floating Back pill for hub-child pages — thumbs live near the bottom, not the top-left. */
+  const [showBackFab, setShowBackFab] = useState(false);
+
+  const scrollTop = useCallback(() => {
+    mainRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const goBack = useCallback(() => {
+    if (locationKey === "default") {
+      navigate("/more");
+    } else {
+      navigate(-1);
+    }
+  }, [locationKey, navigate]);
+
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return undefined;
+    const onScroll = () => {
+      const far = el.scrollTop > 240;
+      if (floatingAction) setShowScrollTop(far);
+      setShowBackFab(isSubpage && far);
+      setStickyScrolled(el.scrollTop > 8);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [floatingAction, isSubpage]);
 
   const refreshPage = useCallback(async () => {
     if (typeof onRefresh === "function") {
@@ -95,9 +155,44 @@ export default function MobileShell({
     paused: forceChrome,
   });
 
+  /* Seed seen ids for this login+day: an ownerKey mismatch (next day, other
+     user, fresh login after reset) starts empty so the badge reappears. */
+  useEffect(() => {
+    const ownerKey = me ? notifySeenOwnerKey(me.user_id ?? me.id) : "";
+    notifyOwnerKeyRef.current = ownerKey;
+    if (!ownerKey) {
+      seenIdsRef.current = new Set();
+      setSeenIds(seenIdsRef.current);
+      return;
+    }
+    const stored = readNotifySeen();
+    seenIdsRef.current = stored.ownerKey === ownerKey ? new Set(stored.ids) : new Set();
+    setSeenIds(seenIdsRef.current);
+  }, [me]);
+
+  const markAnnouncementsSeen = useCallback((rows) => {
+    if (!rows?.length) return;
+    const ownerKey = notifyOwnerKeyRef.current;
+    if (!ownerKey) return;
+    const next = new Set(seenIdsRef.current);
+    let changed = false;
+    rows.forEach((row) => {
+      const id = Number(row?.id);
+      if (!Number.isNaN(id) && !next.has(id)) {
+        next.add(id);
+        changed = true;
+      }
+    });
+    if (!changed) return;
+    seenIdsRef.current = next;
+    setSeenIds(next);
+    saveNotifySeen(ownerKey, next);
+  }, []);
+
   const openNotifications = () => {
     onChromeOpen?.();
     setNotifyOpen(true);
+    markAnnouncementsSeen(announcements);
   };
 
   useEffect(() => {
@@ -118,6 +213,24 @@ export default function MobileShell({
     })();
     return () => ac.abort();
   }, [me]);
+  /** Stay in sync when theme is changed from the Settings page
+      (language sync is handled by useSyncedLoginLang). */
+  useEffect(() => {
+    const onTheme = (e) => setTheme(e?.detail?.theme === "dark" ? "dark" : "light");
+    window.addEventListener(THEME_UPDATED_EVENT, onTheme);
+    return () => window.removeEventListener(THEME_UPDATED_EVENT, onTheme);
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setTheme(writeLoginTheme(theme === "dark" ? "light" : "dark"));
+  }, [theme]);
+
+  const toggleLang = useCallback(
+    (next) => {
+      setLang(writeLoginLang(next === "zh" ? "zh" : "en"));
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!notifyOpen) return undefined;
@@ -126,7 +239,11 @@ export default function MobileShell({
     (async () => {
       try {
         const rows = await fetchMobileAnnouncements(ac.signal);
-        if (!ac.signal.aborted) setAnnouncements(rows);
+        if (!ac.signal.aborted) {
+          setAnnouncements(rows);
+          // Panel is in view: treat anything that arrives now as seen.
+          markAnnouncementsSeen(rows);
+        }
       } catch {
         /* keep previous */
       } finally {
@@ -134,11 +251,16 @@ export default function MobileShell({
       }
     })();
     return () => ac.abort();
-  }, [notifyOpen]);
+  }, [notifyOpen, markAnnouncementsSeen]);
 
   const contentShift = pullPx > 0.5 ? pullPx : 0;
   const contentTransition = isAnimating && phase !== "pulling" && phase !== "armed";
   const mainPadTop = topChromeH;
+
+  const unreadCount = useMemo(
+    () => announcements.filter((row) => !seenIds.has(Number(row?.id))).length,
+    [announcements, seenIds],
+  );
 
   const mainPadBottom = navVisible
     ? "var(--m-shell-main-pad-bottom-nav)"
@@ -148,13 +270,21 @@ export default function MobileShell({
 
   return (
     <div className={`m-shell${navVisible ? "" : " m-shell--no-nav"}`}>
-      <div ref={topChromeRef} className="m-shell-chrome">
+      <div
+        ref={topChromeRef}
+        className={`m-shell-chrome${stickyScrolled ? " m-shell-chrome--scrolled" : ""}`}
+      >
         <MobileAppBar
           i18n={labels}
-          notificationCount={announcements.length}
+          notificationCount={unreadCount}
           onOpenNotifications={openNotifications}
           onRefresh={typeof onRefresh === "function" ? refreshPage : undefined}
           refreshing={gestureRefreshing}
+          leftAction={appBarLeftAction}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          lang={lang}
+          onLangChange={toggleLang}
         />
 
         {stickyBar ? (
@@ -183,11 +313,28 @@ export default function MobileShell({
         </div>
       </main>
 
+      {isSubpage && showBackFab && !overlayOpen && !notifyOpen && !gestureRefreshing ? (
+        <button type="button" onClick={goBack} className="m-shell-back-fab tap-scale" aria-label={labels.back}>
+          <i className="fas fa-arrow-left" aria-hidden="true" />
+          <span>{labels.back}</span>
+        </button>
+      ) : null}
+
       {floatingAction ? (
         <div
           className={`m-shell-fab-slot ${showFloating ? "m-shell-fab-slot--visible" : "m-shell-fab-slot--hidden"}`}
           aria-hidden={!showFloating}
         >
+          {showScrollTop ? (
+            <button
+              type="button"
+              onClick={scrollTop}
+              className="m-shell-scroll-top tap-scale"
+              aria-label={labels.backToTop || "Back to top"}
+            >
+              <i className="fas fa-arrow-up" aria-hidden="true" />
+            </button>
+          ) : null}
           {floatingAction}
         </div>
       ) : null}

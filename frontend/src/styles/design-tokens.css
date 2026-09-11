@@ -28,12 +28,12 @@
 
   /* 基础侧边栏布局 */
   --sidebar-icon-gap: clamp(0.55rem, 0.5rem + 0.08vw, 0.75rem);
-  /* 菜单文字区：以 “Transaction Payment” 两行显示为基准 */
+  /* 菜单文字区：编号前缀加宽后以 “10. Transaction Payment” 单行显示为基准 */
   --sidebar-menu-text-track: clamp(8.25rem, 7.85rem + 0.55vw, 9.75rem);
   --sidebar-menu-trailing-gap: clamp(0.35rem, 0.32rem + 0.06vw, 0.48rem);
   --sidebar-menu-arrow-gap: 0.15rem;
   --sidebar-menu-arrow-size: 0.65rem;
-  --sidebar-lock-width: clamp(194px, calc((var(--sidebar-menu-pad-x) * 2) + var(--sidebar-icon-size) + var(--sidebar-icon-gap) + var(--sidebar-menu-text-track) + var(--sidebar-menu-arrow-gap) + var(--sidebar-menu-arrow-size) + var(--sidebar-menu-trailing-gap)), 218px);
+  --sidebar-lock-width: clamp(204px, calc((var(--sidebar-menu-pad-x) * 2) + var(--sidebar-icon-size) + var(--sidebar-icon-gap) + var(--sidebar-menu-text-track) + var(--sidebar-menu-arrow-gap) + var(--sidebar-menu-arrow-size) + var(--sidebar-menu-trailing-gap)), 218px);
   --sidebar-logo-height: clamp(2.8rem, 2.67rem + 0.2vw, 3.6rem);
   --sidebar-avatar-lock: clamp(3.2rem, 4.09rem + 0.18vw, 4rem);
 

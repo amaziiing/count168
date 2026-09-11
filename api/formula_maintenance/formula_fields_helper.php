@@ -186,8 +186,15 @@ function resolveEffectiveSourcePercentForRow(array $row) {
     }
 
     if ($dbPctRaw !== '') {
+        // Keep the raw DB value as-is (e.g. "0.1/2") — this is the canonical
+        // source used to rebuild formula_edit/formula base and to re-populate
+        // the Edit form. formatSourcePercentForMaintenanceList() evaluates
+        // expressions and must only be used for pure list-display text (see
+        // list_api.php's $sourceDisplay), never here — otherwise the original
+        // expression is permanently replaced by its evaluated value the next
+        // time this row is saved (even from an edit that never touched Source).
         return [
-            'source' => formatSourcePercentForMaintenanceList($dbPctRaw),
+            'source' => $dbPctRaw,
             'enable' => $enableDb ? 1 : 1,
         ];
     }

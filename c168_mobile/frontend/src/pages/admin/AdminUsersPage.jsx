@@ -2,12 +2,10 @@ import { useCallback, useState } from "react";
 import MobileShell from "../../components/layout/MobileShell.jsx";
 import MobileSubpageHeader from "../../components/layout/MobileSubpageHeader.jsx";
 import ScopeBreadcrumb from "../dashboard/ScopeBreadcrumb.jsx";
-import { getRoleClass } from "../../lib/transactionPaymentLogic.js";
 import { useIncrementalList } from "../../hooks/useIncrementalList.js";
 import { useMobileAdminUsers } from "../../hooks/useMobileAdminUsers.js";
-import { formatLastLogin, normRole } from "../../lib/mobileUserAdmin.js";
 import { AccountScopeSheet } from "../account/AccountSheets.jsx";
-import { UserDetailSheet, UserFormSheet } from "./AdminUserSheets.jsx";
+import { UserFormSheet } from "./AdminUserSheets.jsx";
 import "../account/account.css";
 import "./admin.css";
 
@@ -15,54 +13,48 @@ function Chip({ active, onClick, children }) {
   return (
     <button
       type="button"
-      className={`m-account-chip tap-scale${active ? " is-active" : ""}`}
       onClick={onClick}
+      aria-pressed={active}
+      className={`m-account-chip tap-scale${active ? " is-active" : ""}`}
     >
-      {children}
+      <span className="m-account-chip-dot" aria-hidden="true">
+        <i className="fas fa-check" />
+      </span>
+      <span className="m-account-chip-label">{children}</span>
     </button>
   );
 }
 
 function UserCard({ row, admin, onOpen }) {
   const { i18n } = admin;
-  const roleClass = getRoleClass(row.role);
-  const active = normRole(row.status) === "active";
-  const caps = admin.rowCaps(row);
+  const code = String(row.login_id || "").toUpperCase();
+  const name = String(row.name || "").trim();
+  const roleText = [
+    row.role ? String(row.role) : "",
+    row.is_owner_shadow ? "OWNER" : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <article className={`m-account-card m-account-role${roleClass ? ` ${roleClass}` : ""}`}>
-      <button
-        type="button"
-        className="m-account-card-main tap-scale"
-        onClick={() => onOpen(row)}
-        aria-label={`${i18n.tapForDetail}: ${row.login_id}`}
-      >
-        <span className="m-account-avatar">{String(row.login_id || "U").slice(0, 2)}</span>
-        <span className="m-account-card-copy">
-          <strong>{String(row.login_id || "").toUpperCase()}</strong>
-          <span>{String(row.name || "").toUpperCase()}</span>
-          <small>
-            {[
-              row.role ? String(row.role).toUpperCase() : "",
-              row.last_login ? `${i18n.lastLogin} ${formatLastLogin(row.last_login).slice(0, 10)}` : "",
-            ]
-              .filter(Boolean)
-              .join(" · ")}
-          </small>
-        </span>
-        <i className="fas fa-chevron-right" aria-hidden="true" />
-      </button>
-      <div className="m-account-card-actions m-admin-card-actions">
-        {row.is_owner_shadow ? <span className="m-admin-owner-tag">OWNER</span> : <span />}
-        <button
-          type="button"
-          disabled={!admin.canMutate || !caps.canToggleStatus}
-          onClick={() => admin.toggleStatus(row)}
-          className={`m-account-status tap-scale ${active ? "active" : "inactive"}`}
-        >
-          {active ? i18n.active : i18n.inactive}
-        </button>
-      </div>
-    </article>
+    <button
+      type="button"
+      onClick={() => onOpen(row)}
+      className="m-user-card tap-scale"
+      aria-label={`${i18n.tapForDetail}: ${code}`}
+    >
+      <span className="m-user-card-avatar" aria-hidden="true">
+        {code.slice(0, 2)}
+      </span>
+      <span className="m-user-card-copy">
+        <strong>
+          {code}
+          {name && name.toUpperCase() !== code ? <span>{name}</span> : null}
+        </strong>
+        {roleText ? <small>{roleText}</small> : null}
+      </span>
+      <i className="fas fa-chevron-right" aria-hidden="true" />
+    </button>
   );
 }
 
@@ -70,7 +62,6 @@ export default function AdminUsersPage() {
   const admin = useMobileAdminUsers();
   const { i18n } = admin;
   const [scopeOpen, setScopeOpen] = useState(false);
-  const [detailOpen, setDetailOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const { visible, hasMore, sentinelRef } = useIncrementalList(admin.users, 60);
 
@@ -90,12 +81,12 @@ export default function AdminUsersPage() {
       ? companyCode
       : groupId;
   const sidebarGroup = admin.companyId ? groupId : "";
-  const overlayOpen = scopeOpen || detailOpen || formOpen;
+  const overlayOpen = scopeOpen || formOpen;
 
-  const openDetail = useCallback(
+  const openCardEdit = useCallback(
     async (row) => {
-      const detail = await admin.loadDetail(row);
-      if (detail) setDetailOpen(true);
+      await admin.loadDetail(row);
+      if (await admin.openEdit(row)) setFormOpen(true);
     },
     [admin],
   );
@@ -106,7 +97,6 @@ export default function AdminUsersPage() {
         backTo="/more"
         backAriaLabel={i18n.backToMore}
         title={i18n.users}
-        subtitle={i18n.usersSubtitle}
       />
       <div className="m-account-scope-row">
         <button type="button" className="m-account-scope-btn tap-scale" onClick={() => setScopeOpen(true)}>
@@ -171,17 +161,6 @@ export default function AdminUsersPage() {
       overlay={
         <>
           <AccountScopeSheet open={scopeOpen} onClose={() => setScopeOpen(false)} account={admin} />
-          <UserDetailSheet
-            open={detailOpen}
-            onClose={() => setDetailOpen(false)}
-            admin={admin}
-            onEdit={async () => {
-              if (await admin.openEdit()) {
-                setDetailOpen(false);
-                setFormOpen(true);
-              }
-            }}
-          />
           <UserFormSheet open={formOpen} onClose={() => setFormOpen(false)} admin={admin} />
         </>
       }
@@ -199,7 +178,7 @@ export default function AdminUsersPage() {
         ) : admin.users.length ? (
           <div className="m-account-list">
             {visible.map((row) => (
-              <UserCard key={`${row.id}-${row.is_owner_shadow ? "s" : "u"}`} row={row} admin={admin} onOpen={openDetail} />
+              <UserCard key={`${row.id}-${row.is_owner_shadow ? "s" : "u"}`} row={row} admin={admin} onOpen={openCardEdit} />
             ))}
             {hasMore ? <div ref={sentinelRef} className="m-admin-sentinel" aria-hidden="true" /> : null}
           </div>

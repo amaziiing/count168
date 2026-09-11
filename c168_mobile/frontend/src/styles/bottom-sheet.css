@@ -48,7 +48,8 @@
 .m-sheet-panel {
   position: absolute;
   inset-inline: 0;
-  bottom: 0;
+  /* Lift above the system nav bar when the Android shell is full-bleed (--m-inset-b) */
+  bottom: var(--m-inset-b, 0px);
   display: flex;
   max-height: 82%;
   flex-direction: column;
@@ -174,4 +175,6 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  /* Same nav-bar lift as .m-sheet-panel for flex-hosted calendar sheets */
+  padding-bottom: var(--m-inset-b, 0px);
 }

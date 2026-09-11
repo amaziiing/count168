@@ -24,6 +24,9 @@ import {
   buildDashboardCurrencyScopeKey,
 } from "../../../utils/company/sharedCompanyFilter.js";
 import {
+  isGroupLedgerDeniedError,
+  persistReportCompaniesCache,
+  readReportCompaniesCache,
   resolveReportCompanyWhenClosingGroup,
   resolveReportGroupOnlyBoot,
 } from "../shared/reportGcBoot.js";
@@ -85,7 +88,7 @@ function sameCodeList(a = [], b = []) {
 }
 
 function resolveReportBootCompanyId() {
-  const cached = getCachedOwnerCompanies();
+  const cached = getCachedOwnerCompanies() || readReportCompaniesCache();
   const url = new URL(window.location.href);
   const queryCompany = url.searchParams.get("company_id");
   return resolveBootCompanyId({
@@ -101,7 +104,9 @@ export default function CustomerReportPage() {
   const t = useCallback((key, params) => getReportText(lang, key, params), [lang]);
   const r = useMemo(() => REPORT_I18N[lang] || REPORT_I18N.en, [lang]);
 
-  const [companies, setCompanies] = useState(() => getCachedOwnerCompanies() || []);
+  const [companies, setCompanies] = useState(
+    () => getCachedOwnerCompanies() || readReportCompaniesCache() || [],
+  );
 
   const [companyId, setCompanyId] = useState(resolveReportBootCompanyId);
   const [selectedGroup, setSelectedGroup] = useState(() => {
@@ -229,6 +234,7 @@ export default function CustomerReportPage() {
         await fetchOwnerGroupsAll(u).catch(() => null);
         if (cancelled) return;
         setCompanies(rows);
+        persistReportCompaniesCache(rows);
 
         const url = new URL(window.location.href);
         const queryCompany = url.searchParams.get("company_id");
@@ -250,8 +256,9 @@ export default function CustomerReportPage() {
         const groupOnlyBoot = groupFilterOptOut
           ? false
           : resolveReportGroupOnlyBoot(u, bootGc, persistedGc, bootGroup);
-        let nextCompanyId =
-          companyId != null ? companyId : groupOnlyBoot ? null : bootGc.companyId;
+        // A saved company selection always wins over the group-only guess — group-only boot
+        // only applies when there is genuinely no company to restore.
+        let nextCompanyId = companyId != null ? companyId : bootGc.companyId;
         if (groupFilterOptOut && nextCompanyId == null) {
           const pick = resolveReportCompanyWhenClosingGroup(
             u,
@@ -261,7 +268,7 @@ export default function CustomerReportPage() {
           );
           if (pick?.id != null) nextCompanyId = Number(pick.id);
         }
-        if (nextCompanyId == null && savedCompanyId != null && bootGroup && !groupOnlyBoot) {
+        if (nextCompanyId == null && savedCompanyId != null && bootGroup) {
           const inGroup = companiesInGroupList(rows, bootGroup).some(
             (c) => Number(c.id) === Number(savedCompanyId),
           );
@@ -479,6 +486,29 @@ export default function CustomerReportPage() {
     onApplyCode: applyCrossPageCurrency,
   });
 
+  /**
+   * Frontend's group-only pre-check can wrongly allow entering a group ledger the session
+   * isn't actually assigned to; when the backend rejects it, fall back to a reportable
+   * subsidiary instead of leaving the page stuck in an unusable single-group state.
+   * On a cold page load `companies` may still be empty at the moment the request fails
+   * (nothing cached yet) — `groupLedgerDenied` remembers to retry once it arrives.
+   */
+  const [groupLedgerDenied, setGroupLedgerDenied] = useState(false);
+
+  const tryRecoverFromGroupLedgerDenied = useCallback(() => {
+    if (companyId != null) return false;
+    const pick = resolveReportCompanyWhenClosingGroup(me, companies, companyId, groupIds);
+    if (!pick?.id) return false;
+    setGroupLedgerDenied(false);
+    onPrepareCompanySelect(pick);
+    return true;
+  }, [companyId, companies, me, groupIds, onPrepareCompanySelect]);
+
+  useEffect(() => {
+    if (!groupLedgerDenied || companyId != null || !companies.length) return;
+    tryRecoverFromGroupLedgerDenied();
+  }, [groupLedgerDenied, companies, companyId, tryRecoverFromGroupLedgerDenied]);
+
   const reportParams = useMemo(
     () => ({
       accountId,
@@ -519,6 +549,10 @@ export default function CustomerReportPage() {
       setReportSnapshot(REPORT_PAGE_KEY, buildReportSnapshotKey(reportParams), data);
     } catch (err) {
       if (err?.name === "AbortError" || !isReportFetchCurrent(seq)) return;
+      if (isGroupLedgerDeniedError(err)) {
+        if (tryRecoverFromGroupLedgerDenied()) return;
+        setGroupLedgerDenied(true);
+      }
       const msg = err.message || t("loadReportFailed");
       setError(msg);
       notify(msg, "error");
@@ -530,7 +564,17 @@ export default function CustomerReportPage() {
         setReportSyncing(false);
       }
     }
-  }, [reportScope, dateFrom, dateTo, reportParams, beginReportFetch, isReportFetchCurrent, t, notify]);
+  }, [
+    reportScope,
+    dateFrom,
+    dateTo,
+    reportParams,
+    beginReportFetch,
+    isReportFetchCurrent,
+    t,
+    notify,
+    tryRecoverFromGroupLedgerDenied,
+  ]);
 
   useRealtimeDomain(REALTIME_DOMAINS.LEDGER, () => {
     void loadReport();

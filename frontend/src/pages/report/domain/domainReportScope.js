@@ -1,4 +1,3 @@
-import { isDashboardGroupOnlyMode } from "../../../utils/company/sharedCompanyFilter.js";
 import {
   customerReportScopeIsReady,
   resolveCustomerReportScope,
@@ -7,7 +6,9 @@ import {
 /**
  * Domain Report: group pill without subsidiary → group payroll ledger
  * (PROFIT / SALARY / COMMISSION / BONUS).
- * Honour group-only session so stale company_id does not pull C168 captures into AP group view.
+ * Explicit company pill always wins (aligned with Customer Report / transactionScope) — do not
+ * force group-only just because the dashboard is in group-only mode, otherwise switching company
+ * while lacking group-ledger permission wrongly enters single-group mode and errors out.
  */
 export function resolveDomainReportScope(args) {
   const { companies, selectedGroup, companyId, groupsAllMode, groupAllMode, me = null } = args;
@@ -15,7 +16,7 @@ export function resolveDomainReportScope(args) {
     Boolean(selectedGroup) &&
     !groupsAllMode &&
     !groupAllMode &&
-    (companyId == null || companyId === "" || isDashboardGroupOnlyMode());
+    (companyId == null || companyId === "");
 
   return resolveCustomerReportScope({
     companies,

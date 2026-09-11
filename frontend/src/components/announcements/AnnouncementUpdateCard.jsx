@@ -107,7 +107,7 @@ export default function AnnouncementUpdateCard({
         {parsed.items.map((item, index) => (
           <li key={`${index}-${item.slice(0, 24)}`} className="auc-item">
             <span className="auc-index">{padIndex(index)}</span>
-            <span className="auc-item-text">{item}</span>
+            <span className="auc-item-text" dangerouslySetInnerHTML={{ __html: item }} />
           </li>
         ))}
       </ol>

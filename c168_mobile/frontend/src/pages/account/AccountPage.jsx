@@ -1,10 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
 import MobileShell from "../../components/layout/MobileShell.jsx";
 import ScopeBreadcrumb from "../dashboard/ScopeBreadcrumb.jsx";
-import { getRoleClass } from "../../lib/transactionPaymentLogic.js";
 import { useMobileAccount } from "../../hooks/useMobileAccount.js";
+import { getRoleClass } from "../../lib/transactionPaymentLogic.js";
 import {
-  AccountDetailSheet,
   AccountFormSheet,
   AccountScopeSheet,
   CurrencySettingSheet,
@@ -16,63 +15,43 @@ function Chip({ active, onClick, children }) {
   return (
     <button
       type="button"
-      className={`m-account-chip tap-scale${active ? " is-active" : ""}`}
       onClick={onClick}
+      aria-pressed={active}
+      className={`m-account-chip tap-scale${active ? " is-active" : ""}`}
     >
-      {children}
+      <span className="m-account-chip-dot" aria-hidden="true">
+        <i className="fas fa-check" />
+      </span>
+      <span className="m-account-chip-label">{children}</span>
     </button>
   );
 }
 
 function AccountCard({ row, account, onOpen }) {
   const { i18n } = account;
+  const code = String(row.account_id || "").toUpperCase();
+  const name = String(row.name || "").trim();
+  const isInactive = String(row.status || "").toLowerCase() === "inactive";
   const roleClass = getRoleClass(row.role);
-  const active = String(row.status || "").toLowerCase() === "active";
   return (
-    <article className={`m-account-card m-account-role${roleClass ? ` ${roleClass}` : ""}`}>
-      <button
-        type="button"
-        className="m-account-card-main tap-scale"
-        onClick={() => onOpen(row)}
-        aria-label={`${i18n.tapForDetail}: ${row.account_id}`}
-      >
-        <span className="m-account-avatar">{String(row.account_id || "A").slice(0, 2)}</span>
-        <span className="m-account-card-copy">
-          <strong>{String(row.account_id || "").toUpperCase()}</strong>
-          <span>{String(row.name || row.role || "").toUpperCase()}</span>
-          <small>
-            {[row.role, row.last_login ? `${i18n.lastLogin} ${String(row.last_login).slice(0, 10)}` : ""]
-              .filter(Boolean)
-              .join(" · ")}
-          </small>
-        </span>
-        <i className="fas fa-chevron-right" aria-hidden="true" />
-      </button>
-      <div className="m-account-card-actions">
-        <button
-          type="button"
-          disabled={!account.canMutate}
-          onClick={async () => {
-            const result = await account.toggleAlert(row);
-            if (result === "needsEdit") onOpen(row);
-          }}
-          className="m-account-card-alert tap-scale"
-        >
-          {i18n.paymentAlert}
-          <span className={`m-account-switch ${Number(row.payment_alert) ? "is-on" : ""}`}>
-            <span />
-          </span>
-        </button>
-        <button
-          type="button"
-          disabled={!account.canMutate}
-          onClick={() => account.toggleStatus(row)}
-          className={`m-account-status tap-scale ${active ? "active" : "inactive"}`}
-        >
-          {active ? i18n.active : i18n.inactive}
-        </button>
-      </div>
-    </article>
+    <button
+      type="button"
+      onClick={() => onOpen(row)}
+      className={`m-user-card m-account-role tap-scale${roleClass ? ` ${roleClass}` : ""}${
+        isInactive ? " m-account-tile--inactive" : ""
+      }`}
+      aria-label={`${i18n.tapForDetail}: ${code}`}
+    >
+      <span className="m-user-card-copy">
+        <strong title={name || undefined}>
+          {code}
+          {isInactive ? <span className="m-account-inactive-tag">{i18n.inactive}</span> : null}
+        </strong>
+      </span>
+      {row.payment_alert ? (
+        <i className="fas fa-bell m-account-tile-bell" aria-hidden="true" title={i18n.paymentAlert} />
+      ) : null}
+    </button>
   );
 }
 
@@ -80,11 +59,10 @@ export default function AccountPage() {
   const account = useMobileAccount();
   const { i18n } = account;
   const [scopeOpen, setScopeOpen] = useState(false);
-  const [detailOpen, setDetailOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
-  const [currencyOpen, setCurrencyOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
+  const [currencyOpen, setCurrencyOpen] = useState(false);
 
   const companyCode = String(account.selectedCompany?.company_id || "").toUpperCase();
   const groupId = String(
@@ -102,12 +80,11 @@ export default function AccountPage() {
       ? companyCode
       : groupId;
   const sidebarGroup = account.companyId ? groupId : "";
-  const overlayOpen = scopeOpen || detailOpen || formOpen || linkOpen || currencyOpen || sortOpen;
+  const overlayOpen = scopeOpen || formOpen || linkOpen || sortOpen;
 
-  const openDetail = useCallback(
+  const openCardEdit = useCallback(
     async (row) => {
-      const detail = await account.loadDetail(row);
-      if (detail) setDetailOpen(true);
+      if (await account.openEdit(row)) setFormOpen(true);
     },
     [account],
   );
@@ -138,17 +115,6 @@ export default function AccountPage() {
           />
           <i className="fas fa-sliders" aria-hidden="true" />
         </button>
-        <button
-          type="button"
-          className="m-account-settings-btn tap-scale"
-          disabled={!account.canMutate}
-          onClick={async () => {
-            if (await account.openCurrency()) setCurrencyOpen(true);
-          }}
-          aria-label={i18n.currencySetting}
-        >
-          <i className="fas fa-gear" aria-hidden="true" />
-        </button>
       </div>
       <label className="m-account-search">
         <i className="fas fa-magnifying-glass" aria-hidden="true" />
@@ -165,8 +131,22 @@ export default function AccountPage() {
         >
           {i18n.showInactive}
         </Chip>
-        <Chip active={sortOpen} onClick={() => setSortOpen(true)}>
+        {/* Sort chip lights up only for a non-default sort; picking the default
+            (Account · Ascending) in the Sort sheet turns it off again */}
+        <Chip
+          active={account.sortKey !== "account" || account.sortDirection !== "asc"}
+          onClick={() => setSortOpen(true)}
+        >
           <i className="fas fa-arrow-down-wide-short" aria-hidden="true" /> {sortedLabel}
+        </Chip>
+        {/* Desktop parity: toolbar Currency Setting bulk tool (bulk_account_currency_api) */}
+        <Chip
+          active={false}
+          onClick={async () => {
+            if (await account.openCurrency()) setCurrencyOpen(true);
+          }}
+        >
+          <i className="fas fa-coins" aria-hidden="true" /> {i18n.currencySetting}
         </Chip>
       </div>
     </div>
@@ -203,31 +183,24 @@ export default function AccountPage() {
       overlay={
         <>
           <AccountScopeSheet open={scopeOpen} onClose={() => setScopeOpen(false)} account={account} />
-          <AccountDetailSheet
-            open={detailOpen}
-            onClose={() => setDetailOpen(false)}
+          <AccountFormSheet
+            open={formOpen}
+            onClose={() => setFormOpen(false)}
             account={account}
-            onEdit={async () => {
-              if (await account.openEdit()) {
-                setDetailOpen(false);
-                setFormOpen(true);
-              }
-            }}
-            onLink={async () => {
+            onLinkAccount={async () => {
               if (await account.loadLinks()) {
-                setDetailOpen(false);
+                setFormOpen(false);
                 setLinkOpen(true);
               }
             }}
           />
-          <AccountFormSheet open={formOpen} onClose={() => setFormOpen(false)} account={account} />
           <LinkAccountSheet open={linkOpen} onClose={() => setLinkOpen(false)} account={account} />
+          <SortSheet open={sortOpen} onClose={() => setSortOpen(false)} account={account} />
           <CurrencySettingSheet
             open={currencyOpen}
             onClose={() => setCurrencyOpen(false)}
             account={account}
           />
-          <SortSheet open={sortOpen} onClose={() => setSortOpen(false)} account={account} />
         </>
       }
     >
@@ -244,7 +217,7 @@ export default function AccountPage() {
         ) : account.accounts.length ? (
           <div className="m-account-list">
             {account.accounts.map((row) => (
-              <AccountCard key={row.id} row={row} account={account} onOpen={openDetail} />
+              <AccountCard key={row.id} row={row} account={account} onOpen={openCardEdit} />
             ))}
           </div>
         ) : (

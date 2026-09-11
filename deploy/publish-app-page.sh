@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# 把仓库里的手机版下载页发布到站点根目录的 /app/
+#
+# 源：仓库内 c168_mobile/app/install-page/
+# 目标：$APP_ROOT/app/ —— nginx 用 server 级 root + index index.html 直接服务，无需额外 location
+#
+# 由 deploy.sh（count168.site）与 deploy-org.sh（count168.org）调用，也可手动跑：
+#   APP_ROOT=/var/www/count168.org bash deploy/publish-app-page.sh
+#
+# APK 不进 git（c168_mobile/app/*.apk 已 gitignore）：
+#   已存在则保留；缺失时优先从同机 count168.site 的 /app/ 借一份，避免重复上传约 6MB。
+set -euo pipefail
+
+APP_ROOT="${APP_ROOT:-/var/www/count168}"
+SRC="${APP_ROOT}/c168_mobile/app/install-page"
+DST="${APP_ROOT}/app"
+
+if [[ ! -d "$SRC" ]]; then
+  echo "==> skip /app publish: $SRC missing"
+  exit 0
+fi
+
+mkdir -p "$DST"
+
+# 页面文件以仓库为准，每次部署覆盖
+for f in index.html logo.png qr.png qr-org.png; do
+  if [[ -f "$SRC/$f" ]]; then
+    cp -f "$SRC/$f" "$DST/$f"
+  fi
+done
+
+# APK：不进 git，保留线上现有文件；缺失时从同机 site 目录借（或仓库 install-page 里手放的）
+if ! compgen -G "$DST/*.apk" >/dev/null 2>&1; then
+  for cand in /var/www/count168/app "$SRC"; do
+    if compgen -G "$cand/*.apk" >/dev/null 2>&1; then
+      cp -f "$cand"/*.apk "$DST"/
+      echo "==> /app apk copied from $cand"
+      break
+    fi
+  done
+fi
+if ! compgen -G "$DST/*.apk" >/dev/null 2>&1; then
+  echo "WARN: no *.apk in $DST — Android 下载按钮会 404；手动放入 EazyCount-vX.Y.apk"
+fi
+
+if command -v chcon >/dev/null 2>&1; then
+  chcon -R -t httpd_sys_content_t "$DST" 2>/dev/null || true
+fi
+
+echo "==> /app published at $DST: $(ls "$DST" | tr '\n' ' ')"

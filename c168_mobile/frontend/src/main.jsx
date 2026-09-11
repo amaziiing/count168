@@ -2,7 +2,6 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
-import DevPhoneFrame from "./components/dev/DevPhoneFrame.jsx";
 import { applyLoginTheme, readLoginTheme } from "./lib/loginTheme.js";
 import "./styles/tokens.css";
 import "./styles/page-body.css";
@@ -23,9 +22,7 @@ const routerBasename = import.meta.env.PROD ? "/c168_mobile" : undefined;
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter basename={routerBasename}>
-      <DevPhoneFrame>
-        <App />
-      </DevPhoneFrame>
+      <App />
     </BrowserRouter>
   </React.StrictMode>,
 );

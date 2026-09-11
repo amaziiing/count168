@@ -9,8 +9,8 @@
 
 .m-subhead-back {
   display: grid;
-  width: 2rem;
-  height: 2rem;
+  width: 2.75rem;
+  height: 2.75rem;
   flex: 0 0 auto;
   place-items: center;
   border: 1px solid var(--m-color-ring);
@@ -21,7 +21,7 @@
 }
 
 .m-subhead-back i {
-  font-size: 0.85em;
+  font-size: 1rem;
 }
 
 .m-subhead-copy {

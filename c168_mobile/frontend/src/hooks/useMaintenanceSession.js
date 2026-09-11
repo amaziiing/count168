@@ -9,7 +9,7 @@ import {
   resolveMobileGroupIds,
   resolveViewGroupForCompany,
 } from "../lib/dashboardScope.js";
-import { readLoginLang, writeLoginLang } from "../lib/loginLang.js";
+import { useSyncedLoginLang, writeLoginLang } from "../lib/loginLang.js";
 import { canUseGroupOnlyMode, filterCompaniesForUserScope } from "../lib/loginScope.js";
 import { resolveMaintenanceScope } from "../lib/mobileMaintenanceScope.js";
 import {
@@ -26,7 +26,7 @@ import { resolveMobileLandingPath } from "../utils/mobilePermissions.js";
  */
 export function useMaintenanceSession({ canAccess }) {
   const navigate = useNavigate();
-  const [lang, setLangState] = useState(() => readLoginLang());
+  const [lang, setLangState] = useSyncedLoginLang();
   const i18n = useMemo(() => maintenanceText(lang), [lang]);
 
   const [me, setMe] = useState(null);

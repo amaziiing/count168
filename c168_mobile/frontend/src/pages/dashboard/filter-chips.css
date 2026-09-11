@@ -1,0 +1,538 @@
+/* 方案A filter chips — independent per-dimension chips + focused mini sheets */
+
+.m-fchip-row {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding: 0.125rem 0.0625rem 0.25rem;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.m-fchip-row::-webkit-scrollbar {
+  display: none;
+}
+
+/* Card-style segmented bar — hairline divider between segments instead of
+   floating pills; matches the system card radius and saves horizontal space */
+.m-fchip-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  align-items: stretch;
+  width: 100%;
+  border: 1px solid var(--m-color-ring);
+  border-radius: 0.85rem;
+  background: var(--m-color-surface);
+  box-shadow: var(--m-shadow-card);
+  overflow: hidden;
+}
+
+.m-fchip-bar .m-fchip {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0.5rem 0.65rem;
+  min-width: 0;
+  gap: 0.35rem;
+}
+
+.m-fchip-bar .m-fchip + .m-fchip {
+  border-left: 1px solid var(--m-color-ring);
+}
+
+.m-fchip-bar .m-fchip:active {
+  background: var(--m-color-surface-muted);
+}
+
+.m-fchip-bar .m-fchip-value {
+  text-overflow: ellipsis;
+}
+
+.m-fchip {
+  display: inline-flex;
+  flex: 0 0 auto;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--m-color-ring);
+  border-radius: 0.85rem;
+  background: var(--m-color-surface);
+  padding: 0.45rem 0.7rem;
+  box-shadow: var(--m-shadow-card);
+  font: inherit;
+  text-align: left;
+}
+
+.m-fchip-icon {
+  flex-shrink: 0;
+  color: var(--m-color-muted);
+  font-size: 0.8rem;
+}
+
+.m-fchip-value {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  color: var(--m-color-text);
+  font-size: var(--m-text-sub-ratio);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.m-fchip-caret {
+  flex-shrink: 0;
+  color: var(--m-color-muted);
+  font-size: 0.55rem;
+}
+
+.m-fchip-panel .m-sheet-body {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+
+/* Currency pills: wrap freely — every code stays visible, no clipping */
+.m-fchip-panel .m-filter-pill-scroll {
+  flex-wrap: wrap;
+}
+
+
+/* ── Scope sheet: active badge + search + two-pane org picker ───────────── */
+
+
+.m-fchip-org {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 0.45rem;
+  align-items: start;
+}
+
+.m-fchip-pane {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.m-fchip-pane-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--m-color-muted);
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.m-fchip-pane-title i {
+  font-size: 0.65rem;
+}
+
+.m-fchip-pane-list {
+  display: grid;
+  gap: 0.25rem;
+  max-height: 12.5rem;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.m-fchip-pane-list::-webkit-scrollbar {
+  display: none;
+}
+
+.m-fchip-org-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--m-color-ring);
+  border-radius: 0.55rem;
+  background: var(--m-color-surface);
+  padding: 0.32rem 0.45rem;
+  font: inherit;
+  text-align: left;
+}
+
+.m-fchip-org-row:disabled {
+  opacity: 0.45;
+}
+
+.m-fchip-org-row.is-selected {
+  border-color: transparent;
+  /* Inset ring — an outward outline gets clipped by the scroll container */
+  outline: 2px solid rgba(13, 96, 255, 0.55);
+  outline-offset: -2px;
+  background: var(--m-color-surface);
+}
+
+.m-fchip-org-avatar {
+  display: grid;
+  width: 1.4rem;
+  height: 1.4rem;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 0.45rem;
+  background: var(--m-color-surface-muted);
+  color: var(--m-color-text-secondary);
+  font-size: 0.5625rem;
+  font-weight: 800;
+}
+
+.m-fchip-org-row.is-selected .m-fchip-org-avatar {
+  background: var(--m-grad-brand);
+  color: #fff;
+}
+
+.m-fchip-org-main {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 0.05rem;
+}
+
+.m-fchip-org-main strong {
+  overflow: hidden;
+  color: var(--m-color-text);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.m-fchip-org-main small {
+  overflow: hidden;
+  color: var(--m-color-muted);
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.m-fchip-org-count {
+  flex-shrink: 0;
+  min-width: 1.1rem;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-color-surface-muted);
+  padding: 0.05rem 0.3rem;
+  color: var(--m-color-muted);
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.m-fchip-org-check {
+  flex-shrink: 0;
+  color: var(--m-color-success);
+  font-size: 0.75rem;
+}
+
+
+/* Shared blocks (currency pills etc.) */
+.m-fchip-block {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.m-fchip-block-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--m-color-text);
+  font-size: var(--m-text-secondary);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.m-fchip-block-title i {
+  color: var(--m-color-muted);
+  font-size: 0.75rem;
+}
+
+.m-fchip-hint {
+  color: var(--m-color-muted);
+  font-size: var(--m-text-caption);
+  font-weight: 600;
+}
+
+/* ── Currency drag-reorder ───────────────────────────────────────────────── */
+
+.m-fchip-reorder-item {
+  display: inline-flex;
+  flex-shrink: 0;
+  /* Long-press starts the drag; without this the row would steal the gesture */
+  touch-action: none;
+  cursor: grab;
+}
+
+.m-fchip-reorder-item:active {
+  cursor: grabbing;
+}
+
+.m-fchip-currency-pill {
+  font: inherit;
+}
+
+/* ── Pie sector tap detail ───────────────────────────────────────────────── */
+
+.m-dash-pie-detail {
+  display: grid;
+  gap: 0.2rem;
+  margin-top: 0.5rem;
+  border: 1px solid var(--m-color-ring);
+  border-radius: 0.65rem;
+  background: var(--m-color-surface-muted);
+  padding: 0.5rem 0.65rem;
+}
+
+.m-dash-pie-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--m-color-text);
+  font-size: var(--m-text-caption);
+}
+
+.m-dash-pie-detail-head b {
+  font-weight: 800;
+}
+
+.m-dash-pie-detail-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+}
+
+.m-dash-pie-detail-share {
+  color: var(--m-color-muted);
+  font-weight: 700;
+}
+
+.m-dash-pie-detail-line {
+  color: var(--m-color-text-secondary);
+  font-size: var(--m-text-caption);
+  font-weight: 600;
+}
+
+/* Native-amount sub-line in the currency list (desktop parity) */
+.m-dash-currency-native {
+  color: var(--m-color-muted);
+  font-size: var(--m-text-caption);
+  font-weight: 600;
+}
+
+/* ── Date sheet: one cohesive picker — presets (secondary) + calendar (primary) ── */
+
+/* One cohesive ~590px component, viewport-clamped on small screens */
+.m-fchip-panel {
+  width: min(590px, calc(100vw - 12px));
+  margin-inline: auto;
+  border-radius: 1rem 1rem 0 0;
+}
+
+.m-fchip-panel .m-sheet-header {
+  min-height: 64px;
+  border-bottom: 1px solid var(--m-color-ring-soft);
+  padding: 0.75rem 1.25rem;
+}
+
+.m-fchip-panel .m-sheet-title {
+  display: flex;
+  align-items: center;
+  font-size: 1.0625rem;
+  letter-spacing: -0.01em;
+}
+
+/* Close stays visually secondary to the title */
+.m-fchip-panel .m-sheet-close {
+  width: 2rem;
+  height: 2rem;
+  background: transparent;
+  color: var(--m-color-muted);
+  font-size: 0.9rem;
+}
+
+.m-fchip-title-icon {
+  margin-right: 0.5rem;
+  color: var(--m-color-muted);
+  font-size: 1rem;
+}
+
+/* LEFT — quick presets (secondary quick navigation) */
+.m-fchip-datesplit {
+  display: grid;
+  /* Tight preset rail (zh labels are 2-3 chars, EN fits at 13px) leaves the calendar the width */
+  /* Auto rail: sizes to the widest preset, never wraps, calendar takes the rest */
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.m-fchip-side {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 5px 14px 9px;
+  border-right: 1px solid var(--m-color-ring-soft);
+}
+
+.m-fchip-side-item {
+  display: flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 7px;
+  border-radius: 0.6rem;
+  color: var(--m-color-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+  text-align: left;
+}
+
+/* Modern filled selection — compact, clearly active, never louder than the calendar */
+.m-fchip-side-item.is-on {
+  background: var(--m-grad-brand);
+  color: #fff;
+  font-weight: 700;
+}
+
+.m-fchip-side-item:active {
+  background: var(--m-color-surface-muted);
+}
+
+.m-fchip-side-item:focus,
+.m-fchip-side-item:focus-visible,
+.m-fchip-cal-day:focus,
+.m-fchip-cal-day:focus-visible {
+  outline: none;
+}
+
+/* RIGHT — calendar gets the remaining width and internal breathing room */
+.m-fchip-panel--flush .m-sheet-body {
+  padding: 0;
+}
+
+.m-fchip-cal {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  padding: 20px 24px 24px;
+}
+
+.m-fchip-cal-head {
+  display: grid;
+  grid-template-columns: 2rem 1fr 2rem;
+  align-items: center;
+  gap: 8px;
+}
+
+.m-fchip-cal-title {
+  text-align: center;
+  color: var(--m-color-text);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.m-fchip-cal-nav {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--m-color-surface-muted);
+  color: var(--m-color-text-secondary);
+  font-size: 0.7rem;
+}
+
+.m-fchip-cal-nav:active {
+  background: var(--m-color-ring);
+}
+
+.m-fchip-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px 0;
+}
+
+.m-fchip-cal-weekdays {
+  margin-bottom: 2px;
+}
+
+.m-fchip-cal-wd {
+  text-align: center;
+  color: var(--m-color-muted);
+  font-size: 0.65625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0;
+}
+
+.m-fchip-cal-day {
+  position: relative;
+  display: grid;
+  height: 42px;
+  place-items: center;
+  color: var(--m-color-text);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.m-fchip-cal-day.is-off {
+  opacity: 0.35;
+}
+
+.m-fchip-cal-day.is-inrange {
+  background: var(--m-color-info-soft);
+  color: var(--m-color-text);
+}
+
+.m-fchip-cal-day.is-edge {
+  background: var(--m-grad-brand);
+  border-radius: 0.65rem;
+  color: #fff;
+  font-weight: 800;
+}
+
+.m-fchip-cal-todaydot {
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  width: 0.25rem;
+  height: 0.25rem;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: var(--m-color-success);
+}
+
+.m-fchip-cal-day.is-edge .m-fchip-cal-todaydot {
+  background: #fff;
+}
+
+/* ── Responsive: protect the calendar's width first ─────────────────────── */
+
+@media (max-width: 620px) {
+  .m-fchip-panel {
+    width: calc(100vw - 12px);
+  }
+
+  .m-fchip-side {
+    padding: 16px 8px 16px 12px;
+  }
+
+  .m-fchip-side-item {
+    min-height: 36px;
+    padding: 0 8px;
+  }
+
+  .m-fchip-cal {
+    padding: 16px 14px 20px;
+  }
+
+  .m-fchip-cal-day {
+    height: 38px;
+  }
+}
+

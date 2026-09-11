@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchJson } from "../lib/fetchJson.js";
-import { readLoginLang, writeLoginLang } from "../lib/loginLang.js";
+import { useSyncedLoginLang, writeLoginLang } from "../lib/loginLang.js";
 import {
   applyCurrencyAllToggle,
   applyCurrencyToggle,
@@ -23,7 +23,7 @@ import { buildApiUrl } from "../utils/apiUrl.js";
 
 export function useMobileMember() {
   const navigate = useNavigate();
-  const [lang, setLangState] = useState(() => readLoginLang());
+  const [lang, setLangState] = useSyncedLoginLang();
   const i18n = useMemo(() => memberText(lang), [lang]);
   const t = useCallback((key, params) => getMemberText(lang, key, params), [lang]);
 

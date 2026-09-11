@@ -10,7 +10,7 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const indexPath = resolve(repoRoot, "frontend/dist/index.html");
 const SCROLLBAR_HREF = "/frontend/dist/css/dashboard-scrollbar.css?v=20260714-announcement-card-v5";
 const SIDEBAR_LINK =
-  '<link rel="stylesheet" href="/frontend/dist/css/sidebar.css?v=20260812-sidebar-user-name-left" />';
+  '<link rel="stylesheet" href="/frontend/dist/css/sidebar.css?v=20260908-arrow-track-092fr" />';
 
 let html = readFileSync(indexPath, "utf8");
 const before = html;

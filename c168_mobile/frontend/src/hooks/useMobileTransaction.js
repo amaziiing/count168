@@ -62,7 +62,7 @@ import { TRANSACTION_I18N, getTransactionText } from "../translateFile/transacti
 import { DASHBOARD_I18N } from "../translateFile/dashboardTranslate.js";
 import { canAccessTransaction, resolveMobileLandingPath } from "../utils/mobilePermissions.js";
 import { buildApiUrl } from "../utils/apiUrl.js";
-import { readLoginLang, writeLoginLang } from "../lib/loginLang.js";
+import { useSyncedLoginLang, writeLoginLang } from "../lib/loginLang.js";
 import {
   buildMobileRealtimeScopeFromGc,
   setMobileRealtimeScope,
@@ -79,7 +79,7 @@ function isManagerOrAbove(me) {
 
 export function useMobileTransaction({ listPaused = false } = {}) {
   const navigate = useNavigate();
-  const [lang, setLangState] = useState(() => readLoginLang());
+  const [lang, setLangState] = useSyncedLoginLang();
   const t = useMemo(() => getTransactionText.bind(null, lang), [lang]);
   const m = useMemo(() => TRANSACTION_I18N[lang] || TRANSACTION_I18N.en, [lang]);
   const i18n = useMemo(

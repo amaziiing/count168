@@ -1,0 +1,15 @@
+{
+  "appId": "com.count168.mobile",
+  "appName": "EazyCount",
+  "webDir": "www",
+  "server": {
+    "url": "https://count168.site/c168_mobile/frontend/dist/",
+    "cleartext": false,
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  }
+}

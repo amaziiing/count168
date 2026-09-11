@@ -15,11 +15,11 @@ export async function fetchMobileAnnouncements(signal) {
 }
 
 export default function MobileNotifications({ open, onClose, i18n, items = [], loading }) {
-  const [active, setActive] = useState(null);
+  const [collapsedIds, setCollapsedIds] = useState(() => new Set());
   useOverlayLock(open, onClose);
 
   useEffect(() => {
-    if (!open) setActive(null);
+    if (!open) setCollapsedIds(new Set());
   }, [open]);
 
   const panelTitle = i18n?.announcements || i18n?.notifications || "Announcements";
@@ -49,10 +49,6 @@ export default function MobileNotifications({ open, onClose, i18n, items = [], l
         aria-label={panelTitle}
         className={`m-notify-panel ${open ? "m-notify-panel--open" : "m-notify-panel--closed"}`}
       >
-        <div className="m-notify-handle-wrap" aria-hidden="true">
-          <span className="m-notify-handle" />
-        </div>
-
         <div className="m-notify-header">
           <h2 className="m-notify-title">{panelTitle}</h2>
           <button
@@ -72,15 +68,23 @@ export default function MobileNotifications({ open, onClose, i18n, items = [], l
             <p className="m-notify-empty">{emptyText}</p>
           ) : (
             items.map((item) => {
-              const isOpen = Number(active) === Number(item.id);
+              const id = Number(item.id);
+              const isCollapsed = collapsedIds.has(id);
               return (
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => setActive(isOpen ? null : item.id)}
+                  onClick={() =>
+                    setCollapsedIds((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(id)) next.delete(id);
+                      else next.add(id);
+                      return next;
+                    })
+                  }
                   className="m-notify-item"
                 >
-                  <AnnouncementUpdateCard announcement={item} labels={cardLabels} collapsed={!isOpen} />
+                  <AnnouncementUpdateCard announcement={item} labels={cardLabels} collapsed={isCollapsed} />
                 </button>
               );
             })

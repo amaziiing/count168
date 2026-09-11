@@ -10,5 +10,5 @@
         proxy_buffering off;
         proxy_cache off;
         proxy_read_timeout 3600s;
-        chunked_transfer_encoding off;
+        gzip off;
     }

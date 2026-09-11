@@ -1,48 +1,13 @@
 import { useMemo, useState } from "react";
 import { parseBalanceValue, formatTransactionGridMoneyHalfUp } from "../../lib/transactionFormat.js";
 import { moneyToneClass } from "../../lib/money/moneyToneClass.js";
-import {
-  applySummaryWinLossDisplayTolerance,
-  calculateTotals,
-  getRoleClass,
-} from "../../lib/transactionPaymentLogic.js";
+import { calculateTotals, getRoleClass } from "../../lib/transactionPaymentLogic.js";
 
 function MoneyText({ value }) {
   return (
     <span className={moneyToneClass(value)}>
       {formatTransactionGridMoneyHalfUp(value)}
     </span>
-  );
-}
-
-function SideTotalsCard({ m, totals }) {
-  const metrics = [
-    { key: "bf", label: m.bfTable, value: totals.bf },
-    { key: "wl", label: m.winLossTable, value: totals.win_loss },
-    { key: "cd", label: m.crDrTable, value: totals.cr_dr },
-    { key: "bal", label: m.balanceTable, value: totals.balance },
-  ];
-  return (
-    <div className="m-tx-total-card" aria-label={m.total}>
-      <div className="m-tx-total-card-head">{m.total}</div>
-      <table className="m-tx-total-card-table">
-        <tbody>
-          {metrics.map((item, idx) => (
-            <tr
-              key={item.key}
-              className={`m-tx-total-card-row${idx % 2 === 1 ? " m-tx-total-card-row--alt" : ""}`}
-            >
-              <th scope="row" className="m-tx-total-card-label">
-                {item.label}
-              </th>
-              <td className="m-tx-total-card-value">
-                <MoneyText value={item.value} />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
   );
 }
 
@@ -176,7 +141,6 @@ export default function AccountBalanceTables({
   rows,
   showName,
   m,
-  currency,
   onOpenHistory,
   onPickBalance,
 }) {
@@ -184,21 +148,11 @@ export default function AccountBalanceTables({
   const [sideTab, setSideTab] = useState("left");
   const isLeft = sideTab === "left";
   const activeRows = isLeft ? left : right;
-  /* Grand total = Balance+ and Balance− combined (desktop summary card). */
-  const grandTotals = useMemo(
-    () => applySummaryWinLossDisplayTolerance(calculateTotals(rows)),
-    [rows],
-  );
   /* Per-tab total — same calculateTotals as desktop left/right footers. */
   const sideTotals = useMemo(() => calculateTotals(activeRows), [activeRows]);
 
   return (
     <div className="m-tx-balance-root">
-      <p className="m-tx-balance-currency">
-        {m.currencyLabel} {String(currency || "").toUpperCase()}
-        {rows?.length ? ` · ${rows.length}` : ""}
-      </p>
-
       <div className="m-tx-side-tabs" role="tablist" aria-label={m.accountSideTabs || "Account balance sides"}>
         <button
           type="button"
@@ -225,8 +179,6 @@ export default function AccountBalanceTables({
           </span>
         </button>
       </div>
-
-      <SideTotalsCard m={m} totals={grandTotals} />
 
       <DenseAccountTable
         side={isLeft ? "left" : "right"}

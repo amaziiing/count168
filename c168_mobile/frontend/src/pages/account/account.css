@@ -75,7 +75,54 @@
   display: none;
 }
 
-.m-account-chip,
+/* Filter chips: same design language as the Transaction page (m-tx-chip) —
+   white pill with ring border plus an on/off check dot */
+.m-account-chip {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: var(--m-radius-pill);
+  border: 1px solid var(--m-color-ring);
+  background: var(--m-color-surface);
+  padding: 0.32rem 0.75rem 0.32rem 0.375rem;
+  font-size: var(--m-text-compact);
+  font-weight: 600;
+  color: var(--m-color-text-secondary);
+  box-shadow: var(--m-shadow-card);
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.m-account-chip-dot {
+  display: grid;
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-color-surface-muted);
+  color: transparent;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.m-account-chip-dot i {
+  font-size: 0.5625rem;
+  line-height: 1;
+}
+
+.m-account-chip.is-active {
+  border-color: transparent;
+  background: var(--m-grad-brand);
+  color: #fff;
+  box-shadow: 0 6px 16px -6px rgba(13, 96, 255, 0.5);
+}
+
+.m-account-chip.is-active .m-account-chip-dot {
+  background: rgba(255, 255, 255, 0.28);
+  color: #fff;
+}
+
 .m-account-pill {
   flex: 0 0 auto;
   border-radius: var(--m-radius-pill);
@@ -86,7 +133,6 @@
   font-weight: 700;
 }
 
-.m-account-chip.is-active,
 .m-account-pill.is-active,
 .m-account-pill.is-violet.is-active {
   background: var(--m-grad-brand);
@@ -101,46 +147,80 @@
 
 .m-account-list {
   display: grid;
-  gap: 0.7rem;
+  gap: 0.4rem;
 }
 
+/* Account rows are single-line (code + chevron) — two tiles per row keeps the
+   list dense. Scoped to the Account page; Admin/Domain lists stay single-column. */
+.m-account-page .m-account-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.22rem;
+}
+
+/* Compact single-line tile: code left, optional alert bell right. The whole
+   tile taps into the edit form, so no trailing chevron. Uniform min-height
+   keeps the two-column grid rows even. */
+.m-account-list .m-user-card {
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+}
+
+/* Account page only — tighter tile height/padding so more accounts fit on screen. */
+.m-account-page .m-account-list .m-user-card {
+  min-height: 1.85rem;
+  padding: 0.18rem 0.55rem;
+}
+
+.m-account-list .m-account-tile--inactive strong {
+  color: var(--m-color-muted);
+}
+
+/* Needs to out-rank `.m-user-card-copy strong > span` so the tag keeps its
+   own size/weight instead of inheriting the inline-name styles */
+.m-user-card-copy strong > span.m-account-inactive-tag {
+  flex-shrink: 0;
+  overflow: visible;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-color-surface-muted);
+  padding: 0.125rem 0.45rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--m-color-muted);
+}
+
+.m-account-tile-bell {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  color: #d97706;
+}
+
+/* Simplified account card — whole card is one tappable row */
 .m-account-card {
-  overflow: hidden;
-  border: 1px solid var(--m-color-ring);
-  border-left: 0.28rem solid var(--m-color-primary);
-  border-radius: var(--m-radius-card-lg);
-  box-shadow: var(--m-shadow-card);
-  font-size: var(--m-text-compact);
-}
-
-.m-account-card-main {
-  display: grid;
+  display: flex;
   width: 100%;
-  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.7rem;
-  padding: 0.8rem;
+  border: 1px solid var(--m-color-ring);
+  border-radius: var(--m-radius-card-lg);
+  box-shadow: var(--m-shadow-card);
+  padding: 0.45rem 0.75rem;
+  font: inherit;
+  font-size: var(--m-text-compact);
   text-align: left;
 }
 
-.m-account-avatar {
-  display: grid;
-  width: 2.4rem;
-  height: 2.4rem;
-  flex: 0 0 2.4rem;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--m-color-primary-soft);
-  color: var(--m-color-primary-soft-text);
+.m-account-card > i {
+  flex-shrink: 0;
+  color: var(--m-color-label);
   font-size: var(--m-text-sub-ratio);
-  font-weight: 800;
-  text-transform: uppercase;
 }
 
 .m-account-card-copy {
   display: grid;
   min-width: 0;
-  gap: 0.08rem;
+  flex: 1;
+  gap: 0;
 }
 
 .m-account-card-copy strong {
@@ -167,9 +247,109 @@
   white-space: nowrap;
 }
 
-.m-account-card-main > i {
+/* Shared card — quiet two-line row: monogram + ID (name inline) + role · last login.
+   Neutral monogram, uniform height across all cards. Used by Account + Admin Users. */
+.m-user-card {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.7rem;
+  border-radius: var(--m-radius-card-lg);
+  background: var(--m-color-surface);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.05),
+    0 6px 20px -16px rgba(15, 23, 42, 0.2);
+  padding: 0.55rem 0.7rem;
+  font: inherit;
+  font-size: var(--m-text-compact);
+  text-align: left;
+}
+
+.m-user-card-avatar {
+  display: grid;
+  width: 2.375rem;
+  height: 2.375rem;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--m-color-surface-muted);
+  color: var(--m-color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.m-user-card-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 0.05rem;
+}
+
+.m-user-card-copy strong {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.4rem;
+  overflow: hidden;
+  color: var(--m-color-text);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.m-user-card-copy strong > span {
+  overflow: hidden;
+  color: var(--m-color-text-secondary);
+  font-size: var(--m-text-secondary);
+  font-weight: 500;
+  text-overflow: ellipsis;
+}
+
+.m-user-card-copy small {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.3rem;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--m-color-muted);
+  font-size: var(--m-text-caption);
+}
+
+.m-user-card-copy small b {
+  flex-shrink: 0;
+  color: var(--m-color-text-secondary);
+  font-weight: 600;
+}
+
+.m-user-card-copy small > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.m-user-card-copy small .m-user-card-sep {
+  flex-shrink: 0;
+}
+
+.m-user-card > i {
+  flex-shrink: 0;
   color: var(--m-color-label);
-  font-size: var(--m-text-sub-ratio);
+  font-size: 0.8125rem;
+  opacity: 0.65;
+}
+
+/* Base layout still borrowed by Admin users + Domain cards */
+.m-account-card-main {
+  display: grid;
+  width: 100%;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.8rem;
+  text-align: left;
 }
 
 .m-account-card-actions {
@@ -181,7 +361,21 @@
   background: var(--m-color-overlay);
 }
 
-.m-account-card-alert,
+/* Avatar still used inside detail/form sheets */
+.m-account-avatar {
+  display: grid;
+  width: 2.4rem;
+  height: 2.4rem;
+  flex: 0 0 2.4rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--m-color-primary-soft);
+  color: var(--m-color-primary-soft-text);
+  font-size: var(--m-text-sub-ratio);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .m-account-toggle-row {
   display: flex;
   align-items: center;
@@ -470,6 +664,50 @@
 }
 
 .m-account-toggle-row > input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Status switch card — the badge is the label, so no row text is needed.
+   White bordered card to match the form fields; label wraps the whole row so
+   a tap anywhere flips the hidden checkbox. */
+.m-account-status-card {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 3rem;
+  margin: 0 0 1rem;
+  border: 1px solid var(--m-color-ring);
+  border-radius: 0.75rem;
+  background: var(--m-color-surface);
+  padding: 0.7rem 0.85rem;
+  font-size: var(--m-text-body);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.m-account-status-card.is-active {
+  border-color: var(--m-color-success-soft);
+  background: var(--m-color-success-soft);
+}
+
+.m-account-status-card.is-active .m-account-status.active {
+  background: var(--m-color-surface);
+}
+
+.m-account-status-card.is-active .m-account-switch.is-on {
+  background: var(--m-color-success-text);
+}
+
+.m-account-status-card > input:disabled ~ .m-account-switch {
+  opacity: 0.45;
+}
+
+.m-account-status-card > input {
   position: absolute;
   opacity: 0;
   pointer-events: none;

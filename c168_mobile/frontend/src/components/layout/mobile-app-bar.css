@@ -12,39 +12,45 @@
   display: grid;
   height: 3rem;
   max-width: var(--m-page-max-width);
-  grid-template-columns: 44px 1fr 44px;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   padding-inline: 0.625rem;
 }
 
 .m-appbar-btn {
   display: grid;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 2.25rem;
+  height: 2.25rem;
   place-items: center;
-  border-radius: 0.75rem;
+  border-radius: 0.625rem;
   color: #fff;
 }
 
-.m-appbar-spacer {
-  width: 2.75rem;
-  height: 2.75rem;
+.m-appbar-left-group,
+.m-appbar-right-group {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  min-width: 0;
 }
 
-.m-appbar-btn--notify {
-  position: relative;
+.m-appbar-spacer {
+  min-width: 0.5rem;
 }
 
 .m-appbar-center {
   display: flex;
   min-width: 0;
   align-items: center;
-  justify-content: center;
+}
+
+.m-appbar-btn--notify {
+  position: relative;
 }
 
 .m-appbar-logo-btn {
   border-radius: 0.5rem;
-  padding: 0.125rem 0.25rem;
+  padding: 0.125rem 0.375rem;
 }
 
 .m-appbar-logo-btn:disabled {
@@ -52,8 +58,9 @@
 }
 
 .m-appbar-logo {
-  height: 1.75rem;
-  max-width: 9.25rem;
+  /* Boss request: logo visually matches the bell button (44px) */
+  height: 2.25rem;
+  max-width: 9.5rem;
   object-fit: contain;
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
@@ -118,12 +125,18 @@
     height: 2.375rem;
   }
 
-  .m-appbar-spacer {
-    width: 2.375rem;
-    height: 2.375rem;
+  .m-appbar-logo {
+    height: 1.875rem;
+  }
+}
+
+/* Narrow phones: compact the logo and right-cluster gaps so all controls fit */
+@media (max-width: 420px) {
+  .m-appbar-right-group {
+    gap: 0;
   }
 
   .m-appbar-logo {
-    height: 1.5rem;
+    max-width: 7.5rem;
   }
 }

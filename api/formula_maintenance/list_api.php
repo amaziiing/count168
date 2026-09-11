@@ -121,6 +121,9 @@ function mapRowsToDisplay(array $rows, bool $isGroupScope = false) {
         // Source / Formula：与 shared/formula resolveTemplateFormulaBaseAndPercent 一致
         list($resolvedBase, $resolvedSource, $resolvedEnable) = resolveTemplateFormulaBaseAndPercent($row);
         $sourceDisplay = formatSourcePercentForMaintenanceList($resolvedSource);
+        // Raw (un-evaluated) source, e.g. "0.1/2" — used only to re-populate the Edit
+        // form so re-saving without touching Source doesn't bake in the evaluated number.
+        $sourceRaw = (string) $resolvedSource;
         $formulaDisplayParen = buildFormulaDisplayParenFromParts($resolvedBase, $resolvedSource, $resolvedEnable);
         $formulaEdit = buildFormulaEditFromRow($row);
         $processCode = $row['process_code'] ?? '';
@@ -166,6 +169,7 @@ function mapRowsToDisplay(array $rows, bool $isGroupScope = false) {
             'account_name' => $row['account_name'] ?? '',
             'currency' => $currencyDisplay,
             'source' => $sourceDisplay,
+            'source_raw' => $sourceRaw,
             'source_ref' => is_string($sourceRef) ? trim($sourceRef) : trim((string) $sourceRef),
             'product' => $product,
             'input_method' => $inputMethod,

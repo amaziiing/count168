@@ -292,9 +292,12 @@ export function AccountDetailSheet({ open, onClose, account, onEdit, onLink }) {
   );
 }
 
-export function AccountFormSheet({ open, onClose, account }) {
+export function AccountFormSheet({ open, onClose, account, onLinkAccount }) {
   const { i18n, form, setForm } = account;
   const editing = Number(form.id) > 0;
+  const detailRow = account.detail;
+  const canDelete =
+    editing && detailRow && String(detailRow.status || "").toLowerCase() === "inactive";
   const update = (key, value) => setForm((row) => ({ ...row, [key]: value }));
   return (
     <Sheet
@@ -303,18 +306,61 @@ export function AccountFormSheet({ open, onClose, account }) {
       onClose={onClose}
       tall
       footer={
-        <button
-          type="button"
-          disabled={account.saving}
-          className="m-account-primary-btn tap-scale"
-          onClick={async () => {
-            if (await account.saveAccount()) onClose();
-          }}
-        >
-          {account.saving ? i18n.saving : i18n.save}
-        </button>
+        <>
+          <div className="m-account-footer-actions">
+            {editing && onLinkAccount ? (
+              <button
+                type="button"
+                disabled={!account.canMutate}
+                className="m-account-secondary-btn tap-scale"
+                onClick={onLinkAccount}
+              >
+                <i className="fas fa-link" aria-hidden="true" /> {i18n.linkAccount}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              disabled={account.saving}
+              className="m-account-primary-btn tap-scale"
+              onClick={async () => {
+                if (await account.saveAccount()) onClose();
+              }}
+            >
+              {account.saving ? i18n.saving : i18n.save}
+            </button>
+          </div>
+          {canDelete ? (
+            <button
+              type="button"
+              disabled={!account.canMutate || account.saving}
+              className="m-account-danger-btn tap-scale"
+              onClick={async () => {
+                if (!window.confirm(i18n.deleteConfirm)) return;
+                if (await account.deleteAccount()) onClose();
+              }}
+            >
+              <i className="fas fa-trash" aria-hidden="true" /> {i18n.delete}
+            </button>
+          ) : null}
+        </>
       }
     >
+      <label className={`m-account-status-card${(form.status || "active") === "active" ? " is-active" : ""}`}>
+        <span
+          className={`m-account-status ${(form.status || "active") === "active" ? "active" : "inactive"}`}
+        >
+          {(form.status || "active") === "active" ? i18n.active : i18n.inactive}
+        </span>
+        <input
+          type="checkbox"
+          checked={(form.status || "active") === "active"}
+          disabled={!account.canMutate}
+          onChange={(e) => update("status", e.target.checked ? "active" : "inactive")}
+        />
+        <span className={`m-account-switch ${(form.status || "active") === "active" ? "is-on" : ""}`}>
+          <span />
+        </span>
+      </label>
       <div className="m-account-form-grid">
         <FormField label={`${i18n.accountId} *`}>
           <input

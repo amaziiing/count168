@@ -84,33 +84,9 @@ export function canAccessLimitedMaintenance(me) {
   return Boolean(me?.company_has_gambling || me?.company_has_bank);
 }
 
-/** Transaction Maintenance page (mirrors desktop canAccessTransactionFormulaMaintenance). */
-export function canAccessTransactionMaintenance(me) {
-  return canAccessFullMaintenance(me) || canAccessLimitedMaintenance(me);
-}
-
 /** Payment Maintenance page — full Maintenance permission only (desktop-aligned). */
 export function canAccessPaymentMaintenance(me) {
   return canAccessFullMaintenance(me);
-}
-
-/**
- * Bankprocess Maintenance (audit/delete bank-process-sourced txs).
- * Desktop: full maintenance + company_has_bank.
- */
-export function canAccessBankprocessMaintenance(me) {
-  if (!canAccessFullMaintenance(me)) return false;
-  return Boolean(me?.company_has_bank);
-}
-
-/** Maintenance hub / More entry visibility. */
-export function canAccessMaintenance(me) {
-  return canAccessTransactionMaintenance(me);
-}
-
-/** Bank Process list — desktop sidebar "process" permission. */
-export function canAccessBankProcess(me) {
-  return canAccessPermission(me, "process");
 }
 
 /** First mobile route after login — aligned with desktop sidebar order where possible. */
@@ -140,19 +116,16 @@ export function isMobileMoreStackPath(pathname) {
   );
 }
 
-/** First bottom-nav tab besides More — used by the More back button. */
+/** First bottom-nav tab — used by the More back button. More itself lives in
+    the app bar (top-right gear), not in the bottom nav. */
 export function resolveMobileMoreBackPath(me) {
   if (!me) return "/dashboard";
-  const items = mobileNavItems(me).filter((item) => item.to !== "/more");
-  return items[0]?.to || "/dashboard";
+  return mobileNavItems(me)[0]?.to || "/dashboard";
 }
 
 export function mobileNavItems(me) {
   if (String(me?.user_type || "").toLowerCase() === "member") {
-    return [
-      { to: "/member", icon: "fa-chart-line", key: "winLoss" },
-      { to: "/more", icon: "fa-ellipsis", key: "navMore" },
-    ];
+    return [{ to: "/member", icon: "fa-chart-line", key: "winLoss" }];
   }
   const items = [];
   if (canAccessDashboard(me)) {
@@ -164,6 +137,5 @@ export function mobileNavItems(me) {
   if (canAccessAccount(me)) {
     items.push({ to: "/account", icon: "fa-address-book", key: "navAccount" });
   }
-  items.push({ to: "/more", icon: "fa-ellipsis", key: "navMore" });
   return items;
 }

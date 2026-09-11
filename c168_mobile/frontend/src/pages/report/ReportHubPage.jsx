@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import MobileShell from "../../components/layout/MobileShell.jsx";
 import MobileSubpageHeader from "../../components/layout/MobileSubpageHeader.jsx";
 import { fetchJson } from "../../lib/fetchJson.js";
-import { readLoginLang, writeLoginLang } from "../../lib/loginLang.js";
+import { useSyncedLoginLang, writeLoginLang } from "../../lib/loginLang.js";
 import { reportText } from "../../translateFile/reportTranslate.js";
 import { buildApiUrl } from "../../utils/apiUrl.js";
 import { canShowReportEntry, resolveMobileLandingPath } from "../../utils/mobilePermissions.js";
@@ -13,7 +13,7 @@ export default function ReportHubPage() {
   const navigate = useNavigate();
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [lang, setLangState] = useState(() => readLoginLang());
+  const [lang, setLangState] = useSyncedLoginLang();
   const i18n = useMemo(() => reportText(lang), [lang]);
 
   const setLang = useCallback((next) => {

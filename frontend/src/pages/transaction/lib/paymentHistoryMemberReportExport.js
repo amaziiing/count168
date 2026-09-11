@@ -624,8 +624,8 @@ function applyPdfMoneyStyle(cell, rawValue) {
 }
 
 function applyPdfCjkCellStyle(cell, { columnIndex, inHeader = false } = {}) {
-  // Keep CJK rows visually aligned with UI: slightly larger line-height and
-  // avoid synthetic bold that can look blurry in embedded variable fonts.
+  // Keep CJK rows visually aligned with UI: slightly larger line-height for
+  // wrapped Description/Remark text.
   const isDescription = columnIndex === 6;
   const isRemark = columnIndex === 7;
   if (inHeader) {
@@ -659,6 +659,18 @@ const PDF_CJK_FONT_URLS = [
   "https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/Variable/TTF/NotoSansCJKsc-VF.ttf",
   "https://cdn.jsdelivr.net/gh/notofonts/noto-cjk@main/Sans/Variable/TTF/NotoSansCJKsc-VF.ttf",
 ];
+/**
+ * jsPDF's font embedding only understands classic TrueType outlines (glyf/loca) and
+ * has no variable-font (fvar/wght axis) support, so it can only ever render the
+ * default (Regular) master baked into PDF_CJK_FONT_FILE above — asking for "bold"
+ * from that file silently renders the same thin glyphs. This is a real static
+ * Bold instance (weight 700) sliced from the same Noto Sans SC source, served by
+ * Google Fonts as plain TrueType, so it gives jsPDF actual bold glyph outlines.
+ */
+const PDF_CJK_BOLD_FONT_FILE = "NotoSansSC-Bold.ttf";
+const PDF_CJK_BOLD_FONT_URLS = [
+  "https://fonts.gstatic.com/s/notosanssc/v40/k3kCo84MPvpLmixcA63oeAL7Iqp5IZJF9bmaGzjCra5HaN7R9HA.ttf",
+];
 const PDF_HEADER_TOP_MM = 8;
 const PDF_FIRST_PAGE_TOP_MARGIN_MM = 24;
 const PDF_OTHER_PAGE_TOP_MARGIN_MM = 18;
@@ -668,6 +680,7 @@ const PDF_HEADER_META_SEP_GAP_MM = 1.5;
 const PDF_BRAND_BAR_RGB = [0, 44, 73];
 const PDF_FOOTER_BOTTOM_MM = 10;
 let pdfCjkFontBase64Promise = null;
+let pdfCjkBoldFontBase64Promise = null;
 
 function resolvePdfLogoUrls(relativePath) {
   const clean = String(relativePath || "").replace(/^\//, "");
@@ -721,8 +734,8 @@ function blobToDataUrl(blob) {
   });
 }
 
-async function fetchPdfCjkFontBase64() {
-  for (const url of PDF_CJK_FONT_URLS) {
+async function fetchPdfFontBase64(urls) {
+  for (const url of urls) {
     try {
       const res = await fetch(url, {
         credentials: "omit",
@@ -736,13 +749,21 @@ async function fetchPdfCjkFontBase64() {
       /* try next URL */
     }
   }
-  throw new Error("Unable to load CJK font for PDF export");
+  throw new Error("Unable to load font for PDF export");
+}
+
+function addFontToVfsOnce(doc, file, base64) {
+  const hasFile =
+    typeof doc.existsFileInVFS === "function" ? doc.existsFileInVFS(file) : false;
+  if (!hasFile) {
+    doc.addFileToVFS(file, base64);
+  }
 }
 
 async function ensurePdfExportFont(doc) {
   try {
     if (!pdfCjkFontBase64Promise) {
-      pdfCjkFontBase64Promise = fetchPdfCjkFontBase64();
+      pdfCjkFontBase64Promise = fetchPdfFontBase64(PDF_CJK_FONT_URLS);
     }
     let base64 = "";
     try {
@@ -751,15 +772,23 @@ async function ensurePdfExportFont(doc) {
       pdfCjkFontBase64Promise = null;
       throw new Error("CJK font fetch failed");
     }
-    const hasFile =
-      typeof doc.existsFileInVFS === "function"
-        ? doc.existsFileInVFS(PDF_CJK_FONT_FILE)
-        : false;
-    if (!hasFile) {
-      doc.addFileToVFS(PDF_CJK_FONT_FILE, base64);
-    }
+    addFontToVfsOnce(doc, PDF_CJK_FONT_FILE, base64);
     doc.addFont(PDF_CJK_FONT_FILE, PDF_CJK_FONT_FAMILY, "normal");
-    doc.addFont(PDF_CJK_FONT_FILE, PDF_CJK_FONT_FAMILY, "bold");
+
+    // Real static Bold TrueType instance — falls back to the regular file (best
+    // effort, still thin) if the network request fails, so export never breaks.
+    try {
+      if (!pdfCjkBoldFontBase64Promise) {
+        pdfCjkBoldFontBase64Promise = fetchPdfFontBase64(PDF_CJK_BOLD_FONT_URLS);
+      }
+      const boldBase64 = await pdfCjkBoldFontBase64Promise;
+      addFontToVfsOnce(doc, PDF_CJK_BOLD_FONT_FILE, boldBase64);
+      doc.addFont(PDF_CJK_BOLD_FONT_FILE, PDF_CJK_FONT_FAMILY, "bold");
+    } catch {
+      pdfCjkBoldFontBase64Promise = null;
+      doc.addFont(PDF_CJK_FONT_FILE, PDF_CJK_FONT_FAMILY, "bold");
+    }
+
     return PDF_CJK_FONT_FAMILY;
   } catch {
     return null;
@@ -1021,7 +1050,7 @@ export async function downloadMemberReportPdf({
         cellPadding: { top: 0.8, right: 1.2, bottom: 0.8, left: 1.2 },
         lineColor: [232, 237, 243],
         lineWidth: 0.2,
-        textColor: [15, 23, 42],
+        textColor: [0, 0, 0],
         overflow: "hidden",
         valign: "middle",
         fillColor: [249, 251, 255],
@@ -1036,7 +1065,7 @@ export async function downloadMemberReportPdf({
       },
       footStyles: {
         fillColor: [238, 244, 255],
-        textColor: [15, 23, 42],
+        textColor: [0, 0, 0],
         fontStyle: "bold",
         fontSize: 9,
       },
@@ -1046,6 +1075,7 @@ export async function downloadMemberReportPdf({
         const colIdx = hookData.column.index;
         const cellText = Array.isArray(hookData.cell?.text) ? hookData.cell.text.join(" ") : String(hookData.cell?.raw || "");
         const isDescOrRemarkBody = hookData.section === "body" && (colIdx === 6 || colIdx === 7);
+        const isCjkCell = !!(cjkFontFamily && hasCjkText(cellText));
         if (isDescOrRemarkBody) {
           // Enforce unified typography for Description + Remark columns.
           hookData.cell.styles.font = resolvePdfFontFamilyForText(cellText, cjkFontFamily);
@@ -1054,9 +1084,8 @@ export async function downloadMemberReportPdf({
           hookData.cell.styles.lineHeight = 1.0;
           hookData.cell.styles.halign = "left";
           hookData.cell.styles.overflow = "linebreak";
-          hookData.cell.styles.textColor = [15, 23, 42];
+          hookData.cell.styles.textColor = [0, 0, 0];
         }
-        const isCjkCell = !!(cjkFontFamily && hasCjkText(cellText));
         if (isCjkCell && !isDescOrRemarkBody) {
           hookData.cell.styles.font = cjkFontFamily;
           applyPdfCjkCellStyle(hookData.cell, {
@@ -1081,21 +1110,23 @@ export async function downloadMemberReportPdf({
           if (colIdx === 4) applyPdfMoneyStyle(hookData.cell, row?.cr_dr);
           if (colIdx === 5) applyPdfMoneyStyle(hookData.cell, row?.balance);
           if (colIdx === 6 && !isDescOrRemarkBody) {
-            if (!isCjkCell) hookData.cell.styles.fontStyle = "bold";
+            hookData.cell.styles.fontStyle = "bold";
             hookData.cell.styles.overflow = "linebreak";
+            hookData.cell.styles.textColor = [0, 0, 0];
           }
           if (colIdx === 7 && !isDescOrRemarkBody) {
-            if (!isCjkCell) hookData.cell.styles.fontStyle = "bold";
+            hookData.cell.styles.fontStyle = "bold";
             hookData.cell.styles.overflow = "linebreak";
             hookData.cell.styles.halign = "left";
+            hookData.cell.styles.textColor = [0, 0, 0];
           }
           if (colIdx === 1) {
             hookData.cell.styles.overflow = "linebreak";
             hookData.cell.styles.fontStyle = "bold";
-            hookData.cell.styles.textColor = [15, 23, 42];
+            hookData.cell.styles.textColor = [0, 0, 0];
           }
           if (colIdx === 2) {
-            hookData.cell.styles.textColor = [15, 23, 42];
+            hookData.cell.styles.textColor = [0, 0, 0];
             hookData.cell.styles.fontStyle = "bold";
           }
         }

@@ -93,11 +93,11 @@ sudo bash deploy/ec2-amazon-linux-setup.sh
 
 **方式 A — 本机构建后上传（推荐）**
 
-本地：
+本地（必须用 `build:deploy`；普通 `npm run build` 的 postbuild 钩子会删掉新构建的哈希 bundle，部署后 index.html 引用 404 资源 → 白屏）：
 
 ```bash
 cd frontend
-npm run build
+npm run build:deploy
 ```
 
 用 WinSCP / FileZilla 把 `frontend/dist/` 整个目录上传到服务器 `/var/www/count168/frontend/dist/`。
@@ -108,7 +108,7 @@ npm run build
 sudo dnf install -y nodejs npm
 cd /var/www/count168/frontend
 npm ci
-npm run build
+npm run build:deploy
 ```
 
 ## 五、数据库
@@ -208,6 +208,8 @@ push 到 **`main`** 后，GitHub Actions **Deploy to EC2** 会**并行**跑两�
 
 **EC2 上两个目录都要先 clone 好**（见「二点五」）。仅想单独重部署 org：Actions → **Deploy org to EC2** → Run workflow。
 
+每次 deploy 还会自动把手机版下载页发布到站点的 `/app/`（源：仓库 `c168_mobile/app/install-page/`，脚本 `deploy/publish-app-page.sh`，APK 不进 git）——count168.site 与 www.count168.org 都能下载电话版，详见 [`c168_mobile/app/README.md`](../c168_mobile/app/README.md#下载页install-page)。
+
 ### 一次性配置（GitHub → Settings → Secrets and variables → Actions）
 
 | Secret | 值 |
@@ -284,3 +286,4 @@ bash /var/www/count168/deploy/deploy.sh
   **不要**用仓库配置覆盖 `/etc/nginx/conf.d/count168.org.conf`。若需更新 `.site` 的 nginx 路由，手动合并到现有 certbot 配置，或只改 `count168.site.conf` 里非 `listen` 的 location 块。
   若误删了 `count168.site-le-ssl.conf`，用 `sudo certbot --nginx -d count168.site -d www.count168.site` 恢复 HTTPS。
 - 若本地手动成功，但 Actions 仍失败：检查 GitHub Secrets 里 `EC2_HOST`（公网 IP）、`EC2_USER`（`ec2-user`）、`EC2_SSH_KEY`（完整 `.pem` 私钥，含 `BEGIN/END` 行）。Secret 被截断或改错后，从 1072 起会连续失败且网站仍显示旧版本。
+- Actions 数秒失败且日志含 `set: pipefail: invalid option name`：EC2 上的 `deploy/*.sh` 被 WinSCP 写成了 **CRLF**。先 `sed -i 's/\r$//' /var/www/count168/deploy/*.sh` 再跑 `bash /var/www/count168/deploy/deploy.sh`。`winscp-deploy-ec2.ps1` 同步后会自动去 CRLF。

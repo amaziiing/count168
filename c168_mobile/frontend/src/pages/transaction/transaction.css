@@ -8,56 +8,11 @@
   font-size: var(--m-text-compact);
 }
 
-.m-tx-sticky-row {
-  display: flex;
-  align-items: stretch;
-  gap: 0.5rem;
-}
-
-.m-tx-sticky-row .m-filter-bar {
-  min-width: 0;
-  flex: 1;
-}
-
-.m-tx-inbox-btn {
-  position: relative;
-  display: flex;
-  width: 3.5rem;
-  flex-shrink: 0;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--m-radius-card-lg);
-  background: var(--m-color-surface);
-  color: var(--m-color-text-secondary);
-  box-shadow: 0 8px 20px -12px rgba(15, 23, 42, 0.2);
-  outline: 1px solid var(--m-color-ring-soft);
-}
-
-.m-tx-inbox-btn i {
-  font-size: 1rem;
-}
-
-.m-tx-inbox-badge {
-  position: absolute;
-  right: 0.375rem;
-  top: 0.375rem;
-  display: grid;
-  min-width: 1rem;
-  place-items: center;
-  border-radius: var(--m-radius-pill);
-  background: #dc2626;
-  padding: 0 0.25rem;
-  font-size: var(--m-text-micro);
-  font-weight: 700;
-  color: #fff;
-}
-
 .m-tx-chips {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.375rem;
   overflow-x: auto;
-  padding-bottom: 0.125rem;
+  padding: 0.125rem 0.0625rem 0.25rem;
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
@@ -66,19 +21,50 @@
   display: none;
 }
 
+/* Filter chips: pill with on/off check dot so active state reads at a glance */
 .m-tx-chip {
+  display: inline-flex;
   flex-shrink: 0;
+  align-items: center;
+  gap: 0.375rem;
   border-radius: var(--m-radius-pill);
-  padding: 0.375rem 0.75rem;
-  font-size: var(--m-text-sub-ratio);
-  font-weight: 700;
-  transition: background-color 0.15s ease, color 0.15s ease;
-  background: var(--m-color-surface-muted);
+  border: 1px solid var(--m-color-ring);
+  background: var(--m-color-surface);
+  padding: 0.32rem 0.75rem 0.32rem 0.375rem;
+  font-size: var(--m-text-compact);
+  font-weight: 600;
   color: var(--m-color-text-secondary);
+  box-shadow: var(--m-shadow-card);
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.m-tx-chip-dot {
+  display: grid;
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-color-surface-muted);
+  color: transparent;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.m-tx-chip-dot i {
+  font-size: 0.5625rem;
+  line-height: 1;
 }
 
 .m-tx-chip--active {
+  border-color: transparent;
   background: var(--m-grad-brand);
+  color: #fff;
+  box-shadow: 0 6px 16px -6px rgba(13, 96, 255, 0.5);
+}
+
+.m-tx-chip--active .m-tx-chip-dot {
+  background: rgba(255, 255, 255, 0.28);
   color: #fff;
 }
 
@@ -200,14 +186,6 @@
   max-width: 100%;
   padding-bottom: 6rem;
   font-size: var(--m-text-compact);
-}
-
-.m-tx-balance-currency {
-  font-size: var(--m-text-label-ratio);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--m-color-label);
 }
 
 .m-tx-side-tabs {
@@ -334,7 +312,7 @@
 }
 
 .m-tx-dense-th {
-  padding: 0.35rem 0.12rem;
+  padding: 0.22rem 0.12rem;
   font-size: inherit;
   font-weight: 800;
   text-transform: uppercase;
@@ -373,64 +351,6 @@
   padding-right: 0.15rem;
 }
 
-/* Side Total summary card (above Acc table) */
-.m-tx-total-card {
-  overflow: hidden;
-  border-radius: 0.625rem;
-  background: var(--m-color-surface);
-  border: 1px solid var(--m-color-ring);
-  box-shadow: 0 8px 20px -14px rgba(15, 23, 42, 0.35);
-}
-
-.m-tx-total-card-head {
-  padding: 0.5rem 0.75rem;
-  font-size: var(--m-text-secondary);
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-align: center;
-  text-transform: uppercase;
-  color: #f8fafc;
-  background: #1e3a5f;
-}
-
-.m-tx-total-card-table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  font-size: var(--m-text-secondary);
-}
-
-.m-tx-total-card-row {
-  background: var(--m-color-surface);
-}
-
-.m-tx-total-card-row--alt {
-  background: var(--m-color-primary-soft);
-}
-
-.m-tx-total-card-label,
-.m-tx-total-card-value {
-  padding: 0.5rem 0.75rem;
-  border-top: 1px solid var(--m-color-ring);
-  font-weight: 700;
-  line-height: 1.25;
-  vertical-align: middle;
-}
-
-.m-tx-total-card-label {
-  width: 42%;
-  text-align: left;
-  color: var(--m-color-text-secondary);
-  border-right: 1px solid var(--m-color-ring);
-}
-
-.m-tx-total-card-value {
-  width: 58%;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
-}
-
 /* Per-side Total row under Acc headers (current Balance+/− tab) */
 .m-tx-dense-row--total > .m-tx-dense-td,
 .m-tx-dense-row--total > .m-tx-dense-td--total-label {
@@ -441,7 +361,7 @@
 
 .m-tx-dense-td--total-label {
   text-align: left;
-  padding: 0.45rem 0.3rem;
+  padding: 0.16rem 0.3rem;
   font-size: inherit;
   text-transform: uppercase;
   letter-spacing: -0.01em;
@@ -450,7 +370,7 @@
 }
 
 .m-tx-dense-td--acc.m-tx-dense-td--total-label {
-  padding: 0.45rem 0.3rem;
+  padding: 0.16rem 0.3rem;
 }
 
 .m-tx-dense-td--total {
@@ -487,7 +407,7 @@
 }
 
 .m-tx-dense-td {
-  padding: 0.3rem 0.12rem;
+  padding: 0.12rem 0.12rem;
   font-weight: 700;
   line-height: 1.15;
 }
@@ -527,7 +447,7 @@
   align-items: flex-start;
   justify-content: center;
   gap: 0.0625rem;
-  padding: 0.4rem 0.3rem;
+  padding: 0.14rem 0.3rem;
   text-align: left;
   background: transparent;
   color: inherit;
@@ -537,12 +457,13 @@
   filter: brightness(0.96);
 }
 
+/* Account code/name wrap to full display — no ellipsis truncation */
 .m-tx-dense-code {
   display: block;
   max-width: 100%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
   line-height: 1.15;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -551,9 +472,9 @@
 .m-tx-dense-name {
   display: block;
   max-width: 100%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
   line-height: 1.15;
   font-size: 0.9em;
   font-weight: 500;

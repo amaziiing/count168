@@ -12,7 +12,8 @@
   flex: 1;
   flex-direction: column;
   overflow: hidden;
-  background: var(--m-shell-bg);
+  /* Transparent — body::before paints the shared glow background */
+  background: transparent;
 }
 
 .m-shell-chrome {
@@ -25,9 +26,17 @@
 }
 
 .m-shell-sticky-wrap {
-  border-bottom: 1px solid var(--m-sticky-border);
-  background: var(--m-shell-bg);
+  /* Transparent at rest — body::before paints the shared glow background.
+     Once content scrolls underneath, the strip turns solid (see --scrolled). */
+  border-bottom: 0;
+  background: transparent;
   padding: 0.5rem var(--m-page-gutter);
+  transition: background-color 0.2s ease;
+}
+
+.m-shell-chrome--scrolled .m-shell-sticky-wrap {
+  background: var(--m-shell-bg);
+  border-bottom: 1px solid var(--m-sticky-border);
 }
 
 .m-shell-sticky-inner {
@@ -57,7 +66,7 @@
   bottom: 0;
   z-index: 40;
   padding-inline: 0.75rem;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+  padding-bottom: calc(var(--m-safe-b) + 10px);
   pointer-events: none;
   transform: translate3d(0, var(--m-nav-chrome-shift, 0%), 0);
   opacity: var(--m-nav-chrome-opacity, 1);
@@ -85,7 +94,7 @@
   content: "";
   position: absolute;
   inset-inline: -0.75rem;
-  bottom: calc(-1 * env(safe-area-inset-bottom, 0px) - 10px);
+  bottom: calc(-1 * var(--m-safe-b) - 10px);
   top: 0;
   pointer-events: none;
   background: linear-gradient(
@@ -212,8 +221,12 @@
 .m-shell-fab-slot {
   position: fixed;
   inset-inline-end: var(--m-page-gutter);
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 5.5rem);
+  bottom: calc(var(--m-safe-b) + 5.5rem);
   z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
   pointer-events: none;
   transition: opacity 0.3s ease;
 }
@@ -228,8 +241,64 @@
   opacity: 1;
 }
 
+/** Floating Back pill for hub-child pages — bottom-left, thumb-friendly. */
+.m-shell-back-fab {
+  position: fixed;
+  inset-inline-start: var(--m-page-gutter);
+  bottom: calc(var(--m-safe-b) + 1.15rem);
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: var(--m-radius-pill);
+  border: 1px solid var(--m-color-ring);
+  background: var(--m-color-surface);
+  padding: 0.6rem 1rem;
+  color: var(--m-color-text);
+  font: inherit;
+  font-size: var(--m-text-body);
+  font-weight: 600;
+  box-shadow: var(--m-shadow-float);
+  animation: m-shell-scroll-top-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.m-shell-back-fab i {
+  color: var(--m-color-primary);
+  font-size: 0.875rem;
+}
+
+/** Back-to-top — secondary twin of the page FAB, center-aligned above it. */
+.m-shell-scroll-top {
+  display: grid;
+  width: 3.25rem;
+  height: 3.25rem;
+  margin-inline-end: 0.125rem; /* optically center over the 3.5rem FAB below */
+  place-items: center;
+  border-radius: var(--m-radius-pill);
+  border: 1px solid var(--m-color-ring-soft);
+  background: var(--m-color-surface);
+  color: var(--m-color-primary);
+  box-shadow: var(--m-shadow-float);
+  animation: m-shell-scroll-top-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.m-shell-scroll-top i {
+  font-size: 1rem;
+}
+
+@keyframes m-shell-scroll-top-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .m-shell--no-nav .m-shell-fab-slot {
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 1.15rem);
+  bottom: calc(var(--m-safe-b) + 1.15rem);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -253,7 +322,7 @@
 
   .m-shell-nav {
     padding-inline: 0.5rem;
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6px);
+    padding-bottom: calc(var(--m-safe-b) + 6px);
   }
 
   .m-shell-nav-dock {
@@ -282,10 +351,14 @@
   }
 
   .m-shell-fab-slot {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 4.25rem);
+    bottom: calc(var(--m-safe-b) + 4.25rem);
+  }
+
+  .m-shell-back-fab {
+    bottom: calc(var(--m-safe-b) + 0.85rem);
   }
 
   .m-shell--no-nav .m-shell-fab-slot {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 0.85rem);
+    bottom: calc(var(--m-safe-b) + 0.85rem);
   }
 }

@@ -503,7 +503,7 @@
 .m-own-bulk {
   position: fixed;
   right: var(--m-page-gutter, 1rem);
-  bottom: calc(4.6rem + env(safe-area-inset-bottom, 0px));
+  bottom: calc(4.6rem + var(--m-safe-b));
   left: var(--m-page-gutter, 1rem);
   z-index: 40;
   display: flex;

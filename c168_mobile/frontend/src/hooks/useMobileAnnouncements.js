@@ -7,7 +7,7 @@ import {
 } from "../lib/c168DomainAccess.js";
 import { fetchJson } from "../lib/fetchJson.js";
 import { isSystemMaintenanceItUser } from "../lib/loginScope.js";
-import { readLoginLang, writeLoginLang } from "../lib/loginLang.js";
+import { useSyncedLoginLang, writeLoginLang } from "../lib/loginLang.js";
 import { REALTIME_DOMAINS } from "../lib/realtime/realtimeEvents.js";
 import { useRealtimeDomain } from "../lib/realtime/useRealtimeDomain.js";
 import { announcementText, getAnnouncementText } from "../translateFile/announcementTranslate.js";
@@ -44,7 +44,7 @@ const EMPTY_MODE = {
 
 export function useMobileAnnouncements() {
   const navigate = useNavigate();
-  const [lang, setLangState] = useState(() => readLoginLang());
+  const [lang, setLangState] = useSyncedLoginLang();
   const i18n = useMemo(() => announcementText(lang), [lang]);
   const t = useCallback((key, params) => getAnnouncementText(lang, key, params), [lang]);
 

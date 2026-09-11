@@ -53,3 +53,12 @@ database/generated/*.sql
 
 # local SQL dumps (often >100MB; do not push to GitHub)
 database/backups/
+
+# Android shell app (c168_mobile/app)
+c168_mobile/app/node_modules/
+c168_mobile/app/android/keystore.properties
+c168_mobile/app/keystore/*.keystore
+c168_mobile/app/android/local.properties
+
+# built apk copies
+c168_mobile/app/*.apk

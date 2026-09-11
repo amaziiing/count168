@@ -83,9 +83,10 @@ export function parseMiddlemanRateInput(raw) {
 /**
  * Rate-Mul commission in second-currency units (full precision; caller stores at 6dp).
  * 顾客金额固定按 FX Rate（base）计算，不再受 Rate-Mul 影响；
- * commission = 用 Rate-Mul 重新算出来的值 − 顾客固定金额（顺序固定，不能反过来）。
  * - "divide" mode（Rate-Mul 输入 `/newDivisor`，只在 FX Rate 本身也是 `/divisor` 时生效）：
- *   rateMulCommission = from/newDivisor − from/divisor（newDivisor 直接取自输入，不再相加）
+ *   rateMulCommission = from/divisor − from/newDivisor（顾客固定金额 − 用 Rate-Mul 重新算出来的值）。
+ *   除数越大，客人拿到的越少，Middle-Man 抽得越多，所以要 newDivisor > divisor 才是抽成（正数）——
+ *   跟 multiply 模式方向相反：multiply 是「新汇率越小抽得越多」，divide 是「新除数越大抽得越多」。
  * - "multiply" mode（Rate-Mul 输入纯正数）：
  *   - FX Rate 本身也是 `/divisor`：点数直接用，rateMulCommission = mul × 1000（独立玩法，不套用上面公式）
  *   - FX Rate 本身是乘法写法：Rate-Mul 当作「新汇率」，
@@ -105,7 +106,7 @@ export function computeRateMulCommission({ fromAmount, middlemanRate, exchangeRa
     if (!baseDivisor) return MoneyDecimal.toDecimal("0", 0);
     const base = fromDec.div(baseDivisor);
     const adjusted = fromDec.div(parsed.divisor);
-    return adjusted.minus(base);
+    return base.minus(adjusted);
   }
 
   // parsed.mode === "multiply"
@@ -254,8 +255,14 @@ export function buildRatePayload({
 
   const transferFromCode = rateTransferFromAccount?.account_id || "";
   const transferToCode = rateTransferToAccount?.account_id || "";
-  const transferFromDesc = `Transaction to ${transferToCode} (Rate: ${rateExchangeRateRaw})`;
-  const transferToDesc = `Transaction from ${transferFromCode} (Rate: ${rateExchangeRateRaw})`;
+  // payload 命名与 UI 交叉：rate_transfer_from_account_id 实际存的是 UI"To Account"(transferToId)，
+  // rate_transfer_to_account_id 实际存的是 UI"From Account"(transferFromId)。
+  // transferFromDesc 配的是 rate_transfer_from_description（即 UI To Account 的记录），
+  // 所以要引用对方——UI From Account(transferFromCode)；
+  // transferToDesc 配的是 rate_transfer_to_description（即 UI From Account 的记录），
+  // 所以要引用对方——UI To Account(transferToCode)。与 leg1 的互相指涉逻辑保持一致。
+  const transferFromDesc = `Transaction from ${transferFromCode} (Rate: ${rateExchangeRateRaw})`;
+  const transferToDesc = `Transaction to ${transferToCode} (Rate: ${rateExchangeRateRaw})`;
 
   // "divide" 模式（Rate-Mul 输入 `/1.55`）不能原样送 rate_middleman_rate 给后端——
   // 后端用 money_normalize 校验该字段，遇到带 "/" 的字符串会直接抛异常，所以这里只存除数本身。

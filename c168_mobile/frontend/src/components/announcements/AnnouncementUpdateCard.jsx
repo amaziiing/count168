@@ -1,15 +1,8 @@
 import { useMemo } from "react";
 import { parseAnnouncementCard } from "./parseAnnouncementCard.js";
 import { toSafeRenderHtml } from "../../utils/content/richTextSanitizer.js";
+import teamFavicon from "../../assets/favicon.ico";
 import "./announcements.css";
-
-function faviconUrl() {
-  try {
-    return new URL("/favicon.ico", window.location.origin).href;
-  } catch {
-    return "/favicon.ico";
-  }
-}
 
 function padIndex(index) {
   return String(index + 1).padStart(2, "0");
@@ -169,7 +162,7 @@ export default function AnnouncementUpdateCard({
 
       <div className="m-ann-footer">
         <div className="m-ann-team">
-          <img src={faviconUrl()} alt="" width={18} height={18} />
+          <img src={teamFavicon} alt="" width={18} height={18} />
           <span>{labels.teamName || "EAZY COUNT Team"}</span>
         </div>
         {announcement?.created_at ? (

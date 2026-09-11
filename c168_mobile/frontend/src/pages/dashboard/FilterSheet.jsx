@@ -20,7 +20,7 @@ import {
 import { dashboardLabel } from "../../translateFile/dashboardTranslate.js";
 
 /** Group/Company/All identity — detect draft scope switches for currency reset. */
-function buildGcScopeIdentity({ companyId, selectedGroup, groupAllMode, groupsAllMode }) {
+export function buildGcScopeIdentity({ companyId, selectedGroup, groupAllMode, groupsAllMode }) {
   const cid = Number.isFinite(Number(companyId)) && Number(companyId) > 0 ? String(Number(companyId)) : "";
   return [
     cid,
@@ -31,7 +31,7 @@ function buildGcScopeIdentity({ companyId, selectedGroup, groupAllMode, groupsAl
 }
 
 /** Mirror useMobileDashboard.pickAllGroups for Filter draft. */
-function resolveGroupsAllDraft(dash, prev) {
+export function resolveGroupsAllDraft(dash, prev) {
   const me = dash.me;
   const companyGroupsAllLedger = companyLoginCanUseGroupsAllLedger(me);
   const companyLoginGroupsAll =
@@ -155,7 +155,7 @@ function inRangeYmd(day, from, to) {
   return cmpYmd(day, lo) >= 0 && cmpYmd(day, hi) <= 0;
 }
 
-function resolveDraftCurrencies(dash) {
+export function resolveDraftCurrencies(dash) {
   const fallback = String(dash.currencies?.[0] || "MYR").toUpperCase();
   if (Array.isArray(dash.selectedCurrencies) && dash.selectedCurrencies.length) {
     const picked = dash.selectedCurrencies
@@ -168,7 +168,7 @@ function resolveDraftCurrencies(dash) {
   return [code];
 }
 
-function buildDraftFromDash(dash) {
+export function buildDraftFromDash(dash) {
   return {
     dateFrom: dash.dateFrom,
     dateTo: dash.dateTo,
@@ -183,7 +183,7 @@ function buildDraftFromDash(dash) {
   };
 }
 
-function buildDefaultDraft(dash) {
+export function buildDefaultDraft(dash) {
   const txMode = Array.isArray(dash.categories);
   // Transaction Capture Date → today; Dashboard matches first paint → This Month.
   const preset = txMode ? "today" : "thisMonth";
@@ -206,7 +206,7 @@ function buildDefaultDraft(dash) {
   };
 }
 
-function draftGroupOnlyMode(draft) {
+export function draftGroupOnlyMode(draft) {
   const hasCompany = Number.isFinite(Number(draft.companyId)) && Number(draft.companyId) > 0;
   return Boolean(draft.selectedGroup && !draft.groupAllMode && !draft.groupsAllMode && !hasCompany);
 }

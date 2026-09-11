@@ -8,7 +8,7 @@ import {
 } from "../lib/c168DomainAccess.js";
 import { fetchJson } from "../lib/fetchJson.js";
 import { hasProtectedCompany, normalizeDomainFeeSettingsFromApi } from "../lib/domainHelpers.js";
-import { readLoginLang, writeLoginLang } from "../lib/loginLang.js";
+import { useSyncedLoginLang, writeLoginLang } from "../lib/loginLang.js";
 import { REALTIME_DOMAINS } from "../lib/realtime/realtimeEvents.js";
 import { useRealtimeDomain } from "../lib/realtime/useRealtimeDomain.js";
 import { domainText, getDomainText } from "../translateFile/domainTranslate.js";
@@ -16,7 +16,7 @@ import { buildApiUrl } from "../utils/apiUrl.js";
 
 export function useMobileDomain() {
   const navigate = useNavigate();
-  const [lang, setLangState] = useState(() => readLoginLang());
+  const [lang, setLangState] = useSyncedLoginLang();
   const i18n = useMemo(() => domainText(lang), [lang]);
   const t = useCallback((key, params) => getDomainText(lang, key, params), [lang]);
 

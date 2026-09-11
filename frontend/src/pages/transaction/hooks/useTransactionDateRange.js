@@ -40,13 +40,20 @@ export function useTransactionDateRange({
     if (loading || forbidden || !filterSnapshot) return;
 
     let cancelled = false;
+    let observer = null;
 
-    (async () => {
-      if (cancelled) return;
+    const tryInit = () => {
+      if (cancelled || txDateRangePickerReadyRef.current) return true;
       ensureMaintenanceDateRangePicker();
-      if (cancelled || txDateRangePickerReadyRef.current) return;
-      if (!window.MaintenanceDateRangePicker?.init) return;
-      if (!document.getElementById("calendar-popup")) return;
+      if (!window.MaintenanceDateRangePicker?.init) return false;
+      if (!document.getElementById("calendar-popup")) return false;
+      // TransactionSearchSection (the trigger pill + its display span) is held back
+      // behind `surfaceReady` (waits for GC package data) and mounts later than
+      // #calendar-popup, which renders unconditionally — without this check, init()
+      // can fire while the trigger doesn't exist yet, silently binding nothing and
+      // leaving the display text blank with no later retry (surfaceReady flipping
+      // true doesn't re-run this effect).
+      if (!document.getElementById("date-range-picker")) return false;
 
       window.MaintenanceDateRangePicker.init({
         onChange: () => {
@@ -73,11 +80,34 @@ export function useTransactionDateRange({
         displayId: "date-range-display",
       });
       txDateRangePickerReadyRef.current = true;
-    })();
+      return true;
+    };
+
+    if (!tryInit()) {
+      /* #calendar-popup / #date-range-picker can lose the mount race right after login
+       * → first SPA route into this page: AuthenticatedLayout/AnimatedOutlet may still be
+       * resolving, and TransactionSearchSection additionally waits on `surfaceReady`
+       * (no sticky sessionStorage currency-rows cache from a prior visit ⇒ slower GC
+       * package load). Unlike a hard refresh, which always commits the whole page in one
+       * go, these can genuinely not exist yet. Watch the DOM and retry once everything
+       * needed is there, instead of giving up silently (was: permanently broken/blank
+       * Capture Date until a manual page reload). */
+      observer = new MutationObserver(() => {
+        if (tryInit() && observer) {
+          observer.disconnect();
+          observer = null;
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
 
     return () => {
       cancelled = true;
       txDateRangePickerReadyRef.current = false;
+      if (observer) {
+        observer.disconnect();
+        observer = null;
+      }
     };
   }, [loading, forbidden, filterSnapshot?.companyId, setDateFrom, setDateTo, setTxDate, setRateDate, todayDmy]);
 

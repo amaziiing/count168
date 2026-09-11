@@ -17,7 +17,7 @@ body.bg {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, var(--m-safe-b));
   position: relative;
   overflow-x: hidden;
   overflow-y: auto;

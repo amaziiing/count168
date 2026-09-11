@@ -12,6 +12,7 @@ import {
   resolveViewGroupForCompany,
   sortedUniqueGroupIds,
 } from "./dashboardScope.js";
+import { shouldAggregateChartByMonth } from "./dashboardDateUtils.js";
 import { canAccessGroupLedgerForGroup } from "./loginScope.js";
 import { assertApiOk, fetchJson } from "./fetchJson.js";
 
@@ -114,6 +115,9 @@ function buildSingleCompanyBootstrapQuery({
   if (Array.isArray(currencies) && currencies.length > 1) {
     q.set("currencies", currencies.join(","));
   }
+  if (bootstrapScope === "full" && shouldAggregateChartByMonth(dateFrom, dateTo)) {
+    q.set("chart_monthly", "1");
+  }
   const vg = normalizeGroupId(viewGroup);
   if (vg) {
     q.set("view_group", vg);
@@ -134,6 +138,9 @@ function buildGroupLedgerBootstrapQuery({ dateFrom, dateTo, currency, groupKey }
     group_only: "1",
   });
   if (currency) q.set("currency", currency);
+  if (shouldAggregateChartByMonth(dateFrom, dateTo)) {
+    q.set("chart_monthly", "1");
+  }
   return q;
 }
 
@@ -144,7 +151,25 @@ async function fetchBootstrapData(query, signal, loadError) {
   );
   assertApiOk(res, json, loadError);
   if (!json?.data) throw new Error(loadError);
-  return json.data;
+  const data = json.data;
+
+  // Desktop parity: when the bootstrap trims the previous period, refetch it
+  // with bootstrap_scope=previous so MoM compare KPIs never silently vanish.
+  if (query.get("bootstrap_scope") === "full" && !data.previous) {
+    try {
+      const prevQuery = new URLSearchParams(query);
+      prevQuery.set("bootstrap_scope", "previous");
+      const prev = await fetchBootstrapData(prevQuery, signal, loadError);
+      if (prev?.previous) {
+        data.previous = prev.previous;
+        data.previous_date_range = data.previous_date_range || prev.previous_date_range || null;
+      }
+    } catch (e) {
+      if (e?.name === "AbortError") throw e;
+      /* compare KPIs simply stay absent */
+    }
+  }
+  return data;
 }
 
 /** Best-effort group ledger enrich; silent if user lacks group-ledger permission. */

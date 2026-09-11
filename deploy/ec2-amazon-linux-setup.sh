@@ -12,7 +12,7 @@ BRANCH="${BRANCH:-main}"
 
 echo "==> 1/7 安装 Nginx、PHP-FPM、MariaDB、Git（已装则跳过）"
 dnf update -y
-dnf install -y nginx php-fpm php-mysqlnd php-mbstring php-xml php-curl php-pdo mariadb105-server git
+dnf install -y nginx php-fpm php-mysqlnd php-mbstring php-xml php-curl php-pdo php-pecl-apcu mariadb105-server git
 
 echo "==> 2/7 启动 MariaDB / Nginx / PHP-FPM"
 systemctl enable --now mariadb nginx php-fpm

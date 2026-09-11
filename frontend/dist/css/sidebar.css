@@ -815,10 +815,10 @@
 }
 
 .informationmenu-section-title:has(.section-arrow) {
-    grid-template-columns:
-        var(--sidebar-icon-size, 18px)
-        var(--sidebar-menu-text-track, 8rem)
-        auto;
+    /* 0.92fr puts the arrow back at the legacy fixed text-track position
+       (mid-row, after the label column); the ~8% slack packs after it.
+       minmax(0, …) keeps ellipsis working when the label alone overflows. */
+    grid-template-columns: var(--sidebar-icon-size, 18px) minmax(0, 0.92fr) auto;
 }
 
 .informationmenu-section-title::before {
@@ -900,7 +900,7 @@
 }
 
 .section-arrow {
-    grid-column: 8;
+    grid-column: auto;
     font-size: 10px;
     transition: transform 0.3s ease;
     margin-left: var(--sidebar-menu-arrow-gap, 0.12rem);
@@ -1020,7 +1020,7 @@
 /* 子菜单 - 紧凑型，显示在菜单项旁边（显隐仅改 opacity，避免与 fixed 无坐标时落回静态区冲突） */
 .submenu {
     position: fixed;
-    width: clamp(100px, 10.42vw, 200px);
+    width: clamp(100px, 11.2vw, 208px);
     min-height: auto;
     background:rgb(0, 84, 136);
     color: white;

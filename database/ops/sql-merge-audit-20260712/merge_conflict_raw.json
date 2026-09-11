@@ -1,0 +1,1271 @@
+{
+  "source_db": "u857194726_count168",
+  "target_db": "c168_org",
+  "only_in_source": [
+    "system_it_allowlist",
+    "system_runtime_flags",
+    "transaction_full_details_with_rate"
+  ],
+  "only_in_target": [],
+  "schema_diff_tables": [
+    "account",
+    "account_backup",
+    "account_company",
+    "account_company_backup",
+    "account_currency",
+    "account_currency_backup",
+    "account_currency_display_order",
+    "account_link",
+    "announcements",
+    "auto_login_credentials",
+    "bank_process",
+    "bank_process_accounting_resend_daily_guard",
+    "bank_process_accounting_resend_daily_guard_backup",
+    "bank_process_backup",
+    "bank_process_maintenance_resend_pending",
+    "bank_process_maintenance_resend_pending_backup",
+    "company",
+    "company_auto_renew_request",
+    "company_backup",
+    "company_countries",
+    "company_countries_backup",
+    "company_deletion_archive",
+    "company_ownership",
+    "company_ownership_backup",
+    "company_ownership_history",
+    "company_selected_bank_backup",
+    "company_selected_banks",
+    "company_selected_countries",
+    "company_selected_countries_backup",
+    "country_bank",
+    "currency",
+    "currency_backup",
+    "data_capture_details",
+    "data_capture_details_backup",
+    "data_capture_draft",
+    "data_capture_submit_queue",
+    "data_capture_submit_queue_backup",
+    "data_capture_summary_state",
+    "data_capture_summary_state_backup",
+    "data_capture_templates",
+    "data_capture_templates_backup",
+    "data_captures",
+    "data_captures_backup",
+    "data_captures_deleted",
+    "day",
+    "deleted_logs",
+    "description",
+    "description_backup",
+    "domain_list_fee_settings",
+    "group_company_map",
+    "group_ownership",
+    "group_ownership_backup",
+    "group_ownership_history",
+    "groups",
+    "maintenance_marquee",
+    "owner",
+    "owner_backup",
+    "password_reset_tac",
+    "password_reset_tac_owner",
+    "process",
+    "process_accounting_due_dismissed",
+    "process_accounting_posted",
+    "process_backup",
+    "process_day",
+    "process_day_backup",
+    "role",
+    "submitted_processes",
+    "submitted_processes_backup",
+    "tenant_module_policy",
+    "transaction_entry",
+    "transaction_entry_backup",
+    "transactions",
+    "transactions_backup",
+    "transactions_deleted",
+    "transactions_rate",
+    "transactions_rate_backup",
+    "transactions_rate_details",
+    "transactions_rate_details_backup",
+    "user",
+    "user_backup",
+    "user_company_map",
+    "user_company_map_backup",
+    "user_company_permission_backup",
+    "user_company_permissions",
+    "user_group_map"
+  ],
+  "column_set_diff_details": [
+    {
+      "table": "company_auto_renew_request",
+      "source_only_columns": [],
+      "target_only_columns": [
+        "entity_type",
+        "group_id"
+      ]
+    },
+    {
+      "table": "domain_list_fee_settings",
+      "source_only_columns": [],
+      "target_only_columns": [
+        "company_period_prices",
+        "company_price",
+        "group_period_prices",
+        "group_price"
+      ]
+    },
+    {
+      "table": "submitted_processes",
+      "source_only_columns": [],
+      "target_only_columns": [
+        "scope_id",
+        "scope_type"
+      ]
+    }
+  ],
+  "table_data_conflicts": [
+    {
+      "table": "submitted_processes",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 3511,
+      "target_rows": 3483,
+      "source_only_pk": 32,
+      "target_only_pk": 4,
+      "same_pk_same_data": 0,
+      "same_pk_diff_data": 3479,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "data_capture_templates",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 10246,
+      "target_rows": 10000,
+      "source_only_pk": 247,
+      "target_only_pk": 1,
+      "same_pk_same_data": 9919,
+      "same_pk_diff_data": 80,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "user",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 84,
+      "target_rows": 81,
+      "source_only_pk": 3,
+      "target_only_pk": 0,
+      "same_pk_same_data": 65,
+      "same_pk_diff_data": 16,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "user_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 84,
+      "target_rows": 81,
+      "source_only_pk": 3,
+      "target_only_pk": 0,
+      "same_pk_same_data": 65,
+      "same_pk_diff_data": 16,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "account",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 1408,
+      "target_rows": 1406,
+      "source_only_pk": 2,
+      "target_only_pk": 0,
+      "same_pk_same_data": 1392,
+      "same_pk_diff_data": 14,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "account_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 1408,
+      "target_rows": 1406,
+      "source_only_pk": 2,
+      "target_only_pk": 0,
+      "same_pk_same_data": 1392,
+      "same_pk_diff_data": 14,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "user_company_permissions",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 52,
+      "target_rows": 49,
+      "source_only_pk": 3,
+      "target_only_pk": 0,
+      "same_pk_same_data": 35,
+      "same_pk_diff_data": 14,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "user_company_permission_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 52,
+      "target_rows": 49,
+      "source_only_pk": 3,
+      "target_only_pk": 0,
+      "same_pk_same_data": 42,
+      "same_pk_diff_data": 7,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "bank_process",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 115,
+      "target_rows": 110,
+      "source_only_pk": 5,
+      "target_only_pk": 0,
+      "same_pk_same_data": 104,
+      "same_pk_diff_data": 6,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "bank_process_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 115,
+      "target_rows": 110,
+      "source_only_pk": 5,
+      "target_only_pk": 0,
+      "same_pk_same_data": 104,
+      "same_pk_diff_data": 6,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "data_capture_submit_queue_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 6977,
+      "target_rows": 6942,
+      "source_only_pk": 35,
+      "target_only_pk": 0,
+      "same_pk_same_data": 6938,
+      "same_pk_diff_data": 4,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "data_capture_summary_state",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 480,
+      "target_rows": 478,
+      "source_only_pk": 2,
+      "target_only_pk": 0,
+      "same_pk_same_data": 475,
+      "same_pk_diff_data": 3,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "data_capture_summary_state_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 480,
+      "target_rows": 478,
+      "source_only_pk": 2,
+      "target_only_pk": 0,
+      "same_pk_same_data": 475,
+      "same_pk_diff_data": 3,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "process",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 1057,
+      "target_rows": 1056,
+      "source_only_pk": 1,
+      "target_only_pk": 0,
+      "same_pk_same_data": 1055,
+      "same_pk_diff_data": 1,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "owner",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 11,
+      "target_rows": 11,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 10,
+      "same_pk_diff_data": 1,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "domain_list_fee_settings",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 1,
+      "target_rows": 1,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 0,
+      "same_pk_diff_data": 1,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "data_capture_details_backup",
+      "pk": [
+        "backup_id"
+      ],
+      "source_rows": 105251,
+      "target_rows": 104371,
+      "source_only_pk": 880,
+      "target_only_pk": 0,
+      "same_pk_same_data": 104371,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "data_capture_details",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 52375,
+      "target_rows": 51611,
+      "source_only_pk": 799,
+      "target_only_pk": 35,
+      "same_pk_same_data": 51576,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "data_capture_templates_backup",
+      "pk": [
+        "backup_id"
+      ],
+      "source_rows": 49946,
+      "target_rows": 48741,
+      "source_only_pk": 1205,
+      "target_only_pk": 0,
+      "same_pk_same_data": 48741,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "transactions_backup",
+      "pk": [
+        "backup_id"
+      ],
+      "source_rows": 17128,
+      "target_rows": 16933,
+      "source_only_pk": 195,
+      "target_only_pk": 0,
+      "same_pk_same_data": 16933,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "data_captures_backup",
+      "pk": [
+        "backup_id"
+      ],
+      "source_rows": 15721,
+      "target_rows": 15686,
+      "source_only_pk": 35,
+      "target_only_pk": 0,
+      "same_pk_same_data": 15686,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "data_captures",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 8801,
+      "target_rows": 8773,
+      "source_only_pk": 32,
+      "target_only_pk": 4,
+      "same_pk_same_data": 8769,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "transactions",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 8328,
+      "target_rows": 8159,
+      "source_only_pk": 169,
+      "target_only_pk": 0,
+      "same_pk_same_data": 8159,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "deleted_logs",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 7920,
+      "target_rows": 7771,
+      "source_only_pk": 149,
+      "target_only_pk": 0,
+      "same_pk_same_data": 7771,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "data_capture_submit_queue",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 6977,
+      "target_rows": 6942,
+      "source_only_pk": 35,
+      "target_only_pk": 0,
+      "same_pk_same_data": 6942,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "submitted_processes_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 3511,
+      "target_rows": 3483,
+      "source_only_pk": 32,
+      "target_only_pk": 4,
+      "same_pk_same_data": 3479,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "transaction_entry_backup",
+      "pk": [
+        "backup_id"
+      ],
+      "source_rows": 3041,
+      "target_rows": 3021,
+      "source_only_pk": 20,
+      "target_only_pk": 0,
+      "same_pk_same_data": 3021,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "transactions_deleted",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 2776,
+      "target_rows": 2762,
+      "source_only_pk": 14,
+      "target_only_pk": 0,
+      "same_pk_same_data": 2762,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "process_day",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 2492,
+      "target_rows": 2490,
+      "source_only_pk": 4,
+      "target_only_pk": 2,
+      "same_pk_same_data": 2488,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "process_day_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 2492,
+      "target_rows": 2488,
+      "source_only_pk": 4,
+      "target_only_pk": 0,
+      "same_pk_same_data": 2488,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "account_currency",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 1575,
+      "target_rows": 1573,
+      "source_only_pk": 2,
+      "target_only_pk": 0,
+      "same_pk_same_data": 1573,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "account_currency_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 1575,
+      "target_rows": 1573,
+      "source_only_pk": 2,
+      "target_only_pk": 0,
+      "same_pk_same_data": 1573,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "account_company",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 1361,
+      "target_rows": 1359,
+      "source_only_pk": 2,
+      "target_only_pk": 0,
+      "same_pk_same_data": 1359,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "account_company_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 1361,
+      "target_rows": 1359,
+      "source_only_pk": 2,
+      "target_only_pk": 0,
+      "same_pk_same_data": 1359,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "transactions_rate_details_backup",
+      "pk": [
+        "backup_id"
+      ],
+      "source_rows": 1235,
+      "target_rows": 1215,
+      "source_only_pk": 20,
+      "target_only_pk": 0,
+      "same_pk_same_data": 1215,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "data_captures_deleted",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 1085,
+      "target_rows": 1078,
+      "source_only_pk": 7,
+      "target_only_pk": 0,
+      "same_pk_same_data": 1078,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "process_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 1057,
+      "target_rows": 1055,
+      "source_only_pk": 2,
+      "target_only_pk": 0,
+      "same_pk_same_data": 1055,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "process_accounting_posted",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 905,
+      "target_rows": 898,
+      "source_only_pk": 7,
+      "target_only_pk": 0,
+      "same_pk_same_data": 898,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "description",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 503,
+      "target_rows": 502,
+      "source_only_pk": 1,
+      "target_only_pk": 0,
+      "same_pk_same_data": 502,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "description_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 503,
+      "target_rows": 502,
+      "source_only_pk": 1,
+      "target_only_pk": 0,
+      "same_pk_same_data": 502,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "transactions_rate_details",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 484,
+      "target_rows": 468,
+      "source_only_pk": 16,
+      "target_only_pk": 0,
+      "same_pk_same_data": 468,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "transaction_entry",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 465,
+      "target_rows": 449,
+      "source_only_pk": 16,
+      "target_only_pk": 0,
+      "same_pk_same_data": 449,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "bank_process_maintenance_resend_pending",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 293,
+      "target_rows": 292,
+      "source_only_pk": 1,
+      "target_only_pk": 0,
+      "same_pk_same_data": 292,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "bank_process_maintenance_resend_pending_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 293,
+      "target_rows": 292,
+      "source_only_pk": 1,
+      "target_only_pk": 0,
+      "same_pk_same_data": 292,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "transactions_rate_backup",
+      "pk": [
+        "backup_id"
+      ],
+      "source_rows": 281,
+      "target_rows": 276,
+      "source_only_pk": 5,
+      "target_only_pk": 0,
+      "same_pk_same_data": 276,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "country_bank",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 183,
+      "target_rows": 182,
+      "source_only_pk": 1,
+      "target_only_pk": 0,
+      "same_pk_same_data": 182,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "company_selected_bank_backup",
+      "pk": [
+        "company_id",
+        "country",
+        "bank"
+      ],
+      "source_rows": 125,
+      "target_rows": 124,
+      "source_only_pk": 1,
+      "target_only_pk": 0,
+      "same_pk_same_data": 124,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "company_selected_banks",
+      "pk": [
+        "company_id",
+        "country",
+        "bank"
+      ],
+      "source_rows": 125,
+      "target_rows": 124,
+      "source_only_pk": 1,
+      "target_only_pk": 0,
+      "same_pk_same_data": 124,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "transactions_rate",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 112,
+      "target_rows": 108,
+      "source_only_pk": 4,
+      "target_only_pk": 0,
+      "same_pk_same_data": 108,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "account_link",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 78,
+      "target_rows": 78,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 78,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "user_company_map",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 64,
+      "target_rows": 61,
+      "source_only_pk": 3,
+      "target_only_pk": 0,
+      "same_pk_same_data": 61,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "user_company_map_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 64,
+      "target_rows": 61,
+      "source_only_pk": 3,
+      "target_only_pk": 0,
+      "same_pk_same_data": 61,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "currency",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 60,
+      "target_rows": 60,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 60,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "currency_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 60,
+      "target_rows": 60,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 60,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "tenant_module_policy",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 56,
+      "target_rows": 56,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 56,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "company_selected_countries",
+      "pk": [
+        "company_id",
+        "country"
+      ],
+      "source_rows": 54,
+      "target_rows": 54,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 54,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "company_selected_countries_backup",
+      "pk": [
+        "company_id",
+        "country"
+      ],
+      "source_rows": 54,
+      "target_rows": 54,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 54,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "bank_process_accounting_resend_daily_guard",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 48,
+      "target_rows": 48,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 48,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "bank_process_accounting_resend_daily_guard_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 48,
+      "target_rows": 48,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 48,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "company_countries",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 38,
+      "target_rows": 38,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 38,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "company_countries_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 38,
+      "target_rows": 38,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 38,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "company",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 26,
+      "target_rows": 26,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 26,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "company_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 26,
+      "target_rows": 26,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 26,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "company_ownership",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 22,
+      "target_rows": 22,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 22,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "company_ownership_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 22,
+      "target_rows": 22,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 22,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "process_accounting_due_dismissed",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 20,
+      "target_rows": 20,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 20,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "account_currency_display_order",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 15,
+      "target_rows": 15,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 15,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "owner_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 11,
+      "target_rows": 11,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 11,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "role",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 10,
+      "target_rows": 10,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 10,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "group_company_map",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 9,
+      "target_rows": 9,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 9,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "group_ownership",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 9,
+      "target_rows": 9,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 9,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "group_ownership_backup",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 9,
+      "target_rows": 9,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 9,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "day",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 7,
+      "target_rows": 7,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 7,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "company_deletion_archive",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 5,
+      "target_rows": 5,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 5,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "groups",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 4,
+      "target_rows": 4,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 4,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "password_reset_tac_owner",
+      "pk": [
+        "email",
+        "owner_id"
+      ],
+      "source_rows": 3,
+      "target_rows": 3,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 3,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "data_capture_draft",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 2,
+      "target_rows": 2,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 2,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "announcements",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 2,
+      "target_rows": 1,
+      "source_only_pk": 1,
+      "target_only_pk": 0,
+      "same_pk_same_data": 1,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "password_reset_tac",
+      "pk": [
+        "email",
+        "company_id"
+      ],
+      "source_rows": 1,
+      "target_rows": 1,
+      "source_only_pk": 0,
+      "target_only_pk": 0,
+      "same_pk_same_data": 1,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "company_auto_renew_request",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 0,
+      "target_rows": 5,
+      "source_only_pk": 0,
+      "target_only_pk": 5,
+      "same_pk_same_data": 0,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    },
+    {
+      "table": "maintenance_marquee",
+      "pk": [
+        "id"
+      ],
+      "source_rows": 1,
+      "target_rows": 0,
+      "source_only_pk": 1,
+      "target_only_pk": 0,
+      "same_pk_same_data": 0,
+      "same_pk_diff_data": 0,
+      "source_duplicate_pk": 0,
+      "target_duplicate_pk": 0
+    }
+  ],
+  "source_parse_errors": [],
+  "target_parse_errors": []
+}

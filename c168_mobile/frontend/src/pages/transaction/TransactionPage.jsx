@@ -6,8 +6,7 @@ import { persistMobileTxListSnapshot } from "../../lib/mobileTxListSnapshot.js";
 import { parseBalanceValue } from "../../lib/transactionFormat.js";
 import MoneyDecimal from "../../lib/money/moneyDecimal.js";
 import { resolveGridRowToAccountOption } from "../../lib/transactionPaymentLogic.js";
-import FilterSheet from "../dashboard/FilterSheet.jsx";
-import ScopeBreadcrumb from "../dashboard/ScopeBreadcrumb.jsx";
+import { CategoryFilterChip, DateFilterChip, ScopeFilterChip } from "../dashboard/FilterChips.jsx";
 import AccountBalanceTables from "./AccountBalanceTables.jsx";
 import AddTransactionSheet from "./AddTransactionSheet.jsx";
 import ContraInboxSheet from "./ContraInboxSheet.jsx";
@@ -17,9 +16,13 @@ function ToggleChip({ active, onClick, children }) {
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={`m-tx-chip tap-scale${active ? " m-tx-chip--active" : ""}`}
     >
-      {children}
+      <span className="m-tx-chip-dot" aria-hidden="true">
+        <i className="fas fa-check" />
+      </span>
+      <span className="m-tx-chip-label">{children}</span>
     </button>
   );
 }
@@ -27,7 +30,6 @@ function ToggleChip({ active, onClick, children }) {
 export default function TransactionPage() {
   const { tx } = useOutletContext();
   const navigate = useNavigate();
-  const [filterOpen, setFilterOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addPrefill, setAddPrefill] = useState(null);
   /** Only drive pull-to-refresh chrome for user-initiated refresh (not Back remount). */
@@ -128,45 +130,25 @@ export default function TransactionPage() {
       : companyCode;
   const sidebarGroupId = tx.groupOnlyMode ? "" : groupId;
   const inboxCount = tx.contraInbox?.items?.length || 0;
-  const overlayOpen = filterOpen || addOpen || Boolean(tx.contraInbox?.open);
+  const overlayOpen = addOpen || Boolean(tx.contraInbox?.open);
 
   const stickyBar = (
     <div className="m-tx-sticky">
-      <div className="m-tx-sticky-row">
-        <button type="button" onClick={() => setFilterOpen(true)} className="m-filter-bar tap-scale">
-          <div className="m-filter-bar-row">
-            <i className="far fa-calendar m-filter-bar-icon" aria-hidden="true" />
-            <span className="m-filter-bar-dates">{tx.dateRangeText}</span>
-            <span className="m-filter-bar-currency">{tx.currency}</span>
-            <span className="m-filter-bar-action">
-              <i className="fas fa-filter" aria-hidden="true" />
-            </span>
-          </div>
-          <div className="m-filter-bar-scope">
-            <ScopeBreadcrumb
-              i18n={tx.i18n}
-              groupId={groupId}
-              companyCode={companyCode}
-              groupsAllMode={tx.groupsAllMode}
-              groupAllMode={tx.groupAllMode}
-              groupOnlyMode={tx.groupOnlyMode}
-            />
-          </div>
-        </button>
-        {tx.canUseContraInbox ? (
-          <button
-            type="button"
-            onClick={() => tx.setContraInbox((s) => ({ ...s, open: true }))}
-            className="m-tx-inbox-btn tap-scale"
-            aria-label={tx.m.contraInbox}
-          >
-            <i className="fas fa-inbox" aria-hidden="true" />
-            {inboxCount > 0 ? <span className="m-tx-inbox-badge">{inboxCount}</span> : null}
-          </button>
-        ) : null}
+      <div className="m-fchip-row">
+        <div className="m-fchip-bar">
+          <DateFilterChip dash={tx} i18n={tx.i18n} />
+          <ScopeFilterChip
+            dash={tx}
+            i18n={tx.i18n}
+            groupId={groupId}
+            companyCode={companyCode}
+            groupOnlyMode={tx.groupOnlyMode}
+          />
+        </div>
       </div>
 
       <div className="m-tx-chips">
+        <CategoryFilterChip dash={tx} i18n={tx.i18n} />
         <ToggleChip active={tx.showName} onClick={() => tx.setShowName(!tx.showName)}>
           {tx.m.showName}
         </ToggleChip>
@@ -203,6 +185,21 @@ export default function TransactionPage() {
       onRefresh={onPullRefresh}
       refreshing={pullRefreshActive && tx.searchLoading}
       stickyBar={stickyBar}
+      appBarLeftAction={
+        tx.canUseContraInbox ? (
+          <button
+            type="button"
+            onClick={() => tx.setContraInbox((s) => ({ ...s, open: true }))}
+            className="m-appbar-btn m-appbar-btn--inbox tap-scale"
+            aria-label={tx.m.contraInbox}
+          >
+            <i className="fas fa-inbox" aria-hidden="true" />
+            {inboxCount > 0 ? (
+              <span className="m-appbar-badge">{inboxCount > 9 ? "9+" : inboxCount}</span>
+            ) : null}
+          </button>
+        ) : null
+      }
       lang={tx.lang}
       onLangChange={tx.setLang}
       overlayOpen={overlayOpen}
@@ -221,7 +218,6 @@ export default function TransactionPage() {
       }
       overlay={
         <>
-          <FilterSheet open={filterOpen} onClose={() => setFilterOpen(false)} dash={tx} />
           <AddTransactionSheet
             open={addOpen}
             onClose={() => {
@@ -290,7 +286,6 @@ export default function TransactionPage() {
               rows={tx.displayRows}
               showName={tx.showName}
               m={tx.m}
-              currency={tx.currency}
               onOpenHistory={openHistory}
               onPickBalance={pickBalanceForForm}
             />
@@ -301,3 +296,6 @@ export default function TransactionPage() {
     </MobileShell>
   );
 }
+
+
+/* cache-bust 1788512053 */

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchJson } from "../lib/fetchJson.js";
 import { getLoginIdentifier, isGroupLogin } from "../lib/loginScope.js";
-import { readLoginLang, writeLoginLang } from "../lib/loginLang.js";
+import { useSyncedLoginLang, writeLoginLang } from "../lib/loginLang.js";
 import { isPartnershipAuditReadOnlyLocked } from "../lib/partnershipAuditReadOnly.js";
 import { useRealtimeDomain } from "../lib/realtime/useRealtimeDomain.js";
 import { REALTIME_DOMAINS } from "../lib/realtime/realtimeEvents.js";
@@ -42,7 +42,7 @@ import { canAccessOwnership, resolveMobileLandingPath } from "../utils/mobilePer
 
 export function useMobileOwnership() {
   const navigate = useNavigate();
-  const [lang, setLangState] = useState(() => readLoginLang());
+  const [lang, setLangState] = useSyncedLoginLang();
   const i18n = useMemo(() => ownershipText(lang), [lang]);
   const t = useCallback((key, params) => getOwnershipText(lang, key, params), [lang]);
 

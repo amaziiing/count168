@@ -1,11 +1,15 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
-import { memo, useEffect, useRef } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import {
   buildEarningsPieSlices,
   buildEarningsShareByCode,
   computePieCenterMetrics,
   getCurrencyColor,
 } from "../../lib/dashboardEarnings.js";
+import {
+  computeDisplayConvertedAmount,
+  formatFrankfurterUnitRate,
+} from "../../lib/frankfurterRates.js";
 import { formatCurrency } from "../../lib/dashboardFormat.js";
 
 function stripRechartsFocus(root) {
@@ -33,6 +37,8 @@ const CurrencyDistributionCard = memo(function CurrencyDistributionCard({
   isCompanyBreakdown = false,
   tabs = null,
   footer = null,
+  exchangeRates = { rates: {} },
+  exchangeRatesLoading = false,
 }) {
   const pieHostRef = useRef(null);
   const pieUseConverted = !isCompanyBreakdown && useConverted;
@@ -61,6 +67,20 @@ const CurrencyDistributionCard = memo(function CurrencyDistributionCard({
     .sort((a, b) => Number(b.pct) - Number(a.pct));
 
   const empty = !loading && slices.length === 0;
+
+  // Desktop parity: tap a pie sector (or legend row) to inspect the slice —
+  // native amount, converted amount, share % and the FX unit rate.
+  const [activeCode, setActiveCode] = useState(null);
+  useEffect(() => {
+    setActiveCode(null);
+  }, [rows, isCompanyBreakdown, currencyCode, pieUseConverted]);
+  const activeRow = activeCode
+    ? rows.find((r) => String(r.code).toUpperCase() === String(activeCode).toUpperCase())
+    : null;
+  const activeColor =
+    legend.find((item) => item.code === String(activeCode || "").toUpperCase())?.color ||
+    "var(--m-color-ring)";
+  const activeShare = activeCode ? shareByCode[String(activeCode).toUpperCase()] : null;
   const headTitle = title || i18n.currencyDistribution;
   const headBadge = badgeLabel || i18n.currency;
   const showSummary = summaryValue != null && !empty;
@@ -110,7 +130,8 @@ const CurrencyDistributionCard = memo(function CurrencyDistributionCard({
             {i18n.noData}
           </p>
         ) : (
-          <div className="m-dash-pie-wrap">
+          <>
+            <div className="m-dash-pie-wrap">
             <div
               ref={pieHostRef}
               className="m-dash-pie-chart"
@@ -141,7 +162,21 @@ const CurrencyDistributionCard = memo(function CurrencyDistributionCard({
                         label={false}
                       >
                         {(slices.length ? slices : [{ code: "empty", fill: "var(--m-color-ring)" }]).map((entry, index) => (
-                          <Cell key={entry.code || index} fill={entry.fill} stroke="var(--m-color-surface)" strokeWidth={2} />
+                          <Cell
+                            key={entry.code || index}
+                            fill={entry.fill}
+                            stroke="var(--m-color-surface)"
+                            strokeWidth={2}
+                            onClick={
+                              entry.code && entry.code !== "empty"
+                                ? () =>
+                                    setActiveCode((prev) =>
+                                      prev === entry.code ? null : entry.code,
+                                    )
+                                : undefined
+                            }
+                            className="m-dash-pie-cell"
+                          />
                         ))}
                       </Pie>
                     </PieChart>
@@ -164,17 +199,26 @@ const CurrencyDistributionCard = memo(function CurrencyDistributionCard({
                 : legend
               ).map((item) => (
                 <li key={item.code} className="m-dash-pie-legend-item">
-                  <span className="m-dash-pie-legend-dot" style={{ backgroundColor: item.color }} aria-hidden="true" />
-                  <span className="m-dash-pie-legend-code">
-                    {loading ? (
-                      <span className="m-dash-pie-legend-skel" />
-                    ) : (
-                      item.code
-                    )}
-                  </span>
-                  <span className="m-dash-pie-legend-pct">
-                    {loading ? "—" : `${Number(item.pct).toFixed(1)}%`}
-                  </span>
+                  <button
+                    type="button"
+                    className={`m-dash-pie-legend-btn tap-scale${activeCode === item.code ? " is-active" : ""}`}
+                    disabled={loading}
+                    onClick={() =>
+                      setActiveCode((prev) => (prev === item.code ? null : item.code))
+                    }
+                  >
+                    <span className="m-dash-pie-legend-dot" style={{ backgroundColor: item.color }} aria-hidden="true" />
+                    <span className="m-dash-pie-legend-code">
+                      {loading ? (
+                        <span className="m-dash-pie-legend-skel" />
+                      ) : (
+                        item.code
+                      )}
+                    </span>
+                    <span className="m-dash-pie-legend-pct">
+                      {loading ? "—" : `${Number(item.pct).toFixed(1)}%`}
+                    </span>
+                  </button>
                 </li>
               ))}
               {!loading && legend.length === 0 && (
@@ -182,6 +226,46 @@ const CurrencyDistributionCard = memo(function CurrencyDistributionCard({
               )}
             </ul>
           </div>
+
+          {activeRow && !loading ? (
+            <div className="m-dash-pie-detail">
+              <p className="m-dash-pie-detail-head">
+                <span className="m-dash-pie-detail-dot" style={{ backgroundColor: activeColor }} aria-hidden="true" />
+                <b>{String(activeCode).toUpperCase()}</b>
+                {activeShare != null ? (
+                  <span className="m-dash-pie-detail-share">{Number(activeShare).toFixed(1)}%</span>
+                ) : null}
+              </p>
+              <p className="m-dash-pie-detail-line">
+                {i18n.native || "Native"}: {formatCurrency(activeRow.earnings)}{" "}
+                {String(activeCode).toUpperCase()}
+              </p>
+              {pieUseConverted && String(activeCode).toUpperCase() !== String(pieBaseCode).toUpperCase() ? (
+                <p className="m-dash-pie-detail-line">
+                  ≈{" "}
+                  {formatCurrency(
+                    activeRow.earningsConverted != null
+                      ? activeRow.earningsConverted
+                      : computeDisplayConvertedAmount(
+                          activeRow.earnings,
+                          String(activeCode).toUpperCase(),
+                          pieBaseCode,
+                          exchangeRates.rates,
+                        ),
+                  )}{" "}
+                  {pieBaseCode}
+                  {exchangeRatesLoading
+                    ? ""
+                    : ` · ${i18n.rate} ${formatFrankfurterUnitRate(
+                        String(activeCode).toUpperCase(),
+                        pieBaseCode,
+                        exchangeRates.rates,
+                      )}`}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+          </>
         )}
       </div>
 

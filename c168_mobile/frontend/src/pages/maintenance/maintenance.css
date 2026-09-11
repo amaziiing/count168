@@ -395,32 +395,73 @@
 html[data-theme="dark"] .m-mt-type-tag.is-amber { background: rgba(253, 224, 71, 0.16); color: #fde68a; }
 html[data-theme="dark"] .m-mt-type-tag.is-teal { background: rgba(45, 212, 191, 0.16); color: #5eead4; }
 
-/* ---- Action bar (delete) ---- */
+/* ---- Action bar (delete) — floating selection pill, docked near the true
+   bottom (these more-stack pages have no bottom nav to clear) ---- */
 .m-mt-actionbar {
   position: fixed;
   inset-inline: 0;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 76px);
+  bottom: calc(var(--m-safe-b) + 1rem);
   z-index: 55;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.6rem;
   width: min(100%, var(--m-page-max-width));
   margin-inline: auto;
-  border-radius: var(--m-radius-card-lg);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
   background: var(--m-appbar-bg);
-  padding: 0.6rem 0.7rem 0.6rem 1rem;
+  padding: 0.4rem 0.5rem 0.4rem 0.75rem;
   box-shadow: var(--m-shadow-float);
   color: #fff;
   font-weight: 700;
+}
+
+.m-mt-actionbar-count {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.875rem;
+}
+
+.m-mt-actionbar-check {
+  display: grid;
+  width: 1.4rem;
+  height: 1.4rem;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--m-grad-brand);
+  color: #fff;
+  font-size: 0.625rem;
+}
+
+.m-mt-actionbar-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.m-mt-clear-btn {
+  display: grid;
+  width: 2.1rem;
+  height: 2.1rem;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 0.85rem;
 }
 
 .m-mt-delete-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  border-radius: var(--m-radius-card);
+  border-radius: 999px;
   background: var(--m-color-danger);
-  padding: 0.6rem 1rem;
+  padding: 0.55rem 1rem;
   color: #fff;
   font-weight: 800;
 }
@@ -599,4 +640,64 @@ html[data-theme="dark"] .m-mt-type-tag.is-teal { background: rgba(45, 212, 191, 
 
 .m-mt-confirm-delete:disabled {
   opacity: 0.6;
+}
+
+/* Secondary chip row under the date/scope bar (mirrors transaction m-tx-chips) */
+.m-mt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.m-mt-chips .m-fchip {
+  flex: 0 0 auto;
+}
+
+/* Type chip sits inline before the search input (one row) */
+.m-mt-searchrow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.m-mt-searchrow .m-mt-search {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+/* Transaction type single-select list (chip mini sheet) */
+.m-mt-type-list {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.25rem 0 0.5rem;
+}
+
+.m-mt-type-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  border: 1px solid var(--m-color-ring);
+  border-radius: 0.85rem;
+  background: var(--m-color-surface);
+  padding: 0.7rem 0.9rem;
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--m-color-text);
+  text-align: left;
+}
+
+.m-mt-type-item.is-active {
+  border-color: var(--m-color-primary);
+  background: var(--m-role-partner-bg, #e0f2fe);
+  color: var(--m-role-partner-fg, #0369a1);
+}
+
+.m-mt-type-item.is-active i {
+  color: var(--m-color-primary);
 }

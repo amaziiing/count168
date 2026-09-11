@@ -32,10 +32,22 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-tap-highlight-color: transparent;
+    background: var(--m-shell-bg);
+    font-family: "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  /* Single viewport-fixed background layer — the app shell (app bar, sticky
+     filter bar, content) stays transparent above it, so no scroll container
+     or fixed strip can ever show a seam against the page background.
+     Excluded on the login page (body.bg paints its own branded background). */
+  body:not(.bg)::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
     background:
       radial-gradient(ellipse 120% 80% at 50% -20%, var(--m-body-glow) 0%, transparent 55%),
       var(--m-shell-bg);
-    font-family: "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   }
 
   /*
@@ -168,7 +180,6 @@
 
 /* Narrow phones / fold cover */
 @media (max-width: 340px) {
-  .dev-phone-screen,
   #root {
     font-size: 15px;
   }

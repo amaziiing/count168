@@ -38,9 +38,11 @@ export default defineConfig(({ mode }) => {
         "/images": { target: phpTarget, changeOrigin: true },
         "/js": { target: phpTarget, changeOrigin: true },
         // SSE hub (services/tx-realtime); same path nginx uses in production.
+        // nginx strips the /realtime prefix; the hub only serves /sse and /publish.
         "/realtime": {
           target: env.VITE_REALTIME_PROXY_TARGET || "http://127.0.0.1:3911",
           changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/realtime/, ""),
         },
       },
     },

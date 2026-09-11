@@ -1,0 +1,225 @@
+{
+  "generatedAt": "2026-07-15T08:40:56.525Z",
+  "variants": [
+    {
+      "id": "bank",
+      "title": "Bank Process List",
+      "failed": [],
+      "checks": {
+        "popupOpens": true,
+        "popupHas8Presets": true,
+        "popupGridLayout": true,
+        "popupDaysRender": true,
+        "manualRangeOk": true,
+        "thisYearFromEmptyOk": true,
+        "thisYearSlashFormat": true,
+        "thisYearPresetOnReopen": true,
+        "preset_today": true,
+        "preset_yesterday": true,
+        "preset_thisWeek": true,
+        "preset_lastWeek": true,
+        "preset_thisMonth": true,
+        "preset_lastMonth": true,
+        "preset_thisYear": true,
+        "preset_lastYear": true,
+        "staleBindingOk": true,
+        "triggerCssOk": true
+      },
+      "thisYearFromEmpty": {
+        "emptyBefore": true,
+        "singleClickOk": true,
+        "displayOk": true,
+        "from": "01/01/2026",
+        "to": "15/07/2026",
+        "display": "01/01/2026 - 15/07/2026"
+      },
+      "presetDates": {
+        "today": {
+          "from": "15/07/2026",
+          "to": "15/07/2026"
+        },
+        "yesterday": {
+          "from": "14/07/2026",
+          "to": "14/07/2026"
+        },
+        "thisWeek": {
+          "from": "13/07/2026",
+          "to": "15/07/2026"
+        },
+        "lastWeek": {
+          "from": "06/07/2026",
+          "to": "12/07/2026"
+        },
+        "thisMonth": {
+          "from": "01/07/2026",
+          "to": "15/07/2026"
+        },
+        "lastMonth": {
+          "from": "01/06/2026",
+          "to": "30/06/2026"
+        },
+        "thisYear": {
+          "from": "01/01/2026",
+          "to": "15/07/2026"
+        },
+        "lastYear": {
+          "from": "01/01/2025",
+          "to": "31/12/2025"
+        }
+      }
+    },
+    {
+      "id": "dashboard",
+      "title": "Dashboard Home",
+      "failed": [],
+      "checks": {
+        "popupOpens": true,
+        "popupHas8Presets": true,
+        "popupGridLayout": true,
+        "popupDaysRender": true,
+        "manualRangeOk": true,
+        "thisYearFromEmptyOk": true,
+        "thisYearSlashFormat": true,
+        "thisYearPresetOnReopen": true,
+        "preset_today": true,
+        "preset_yesterday": true,
+        "preset_thisWeek": true,
+        "preset_lastWeek": true,
+        "preset_thisMonth": true,
+        "preset_lastMonth": true,
+        "preset_thisYear": true,
+        "preset_lastYear": true
+      },
+      "thisYearFromEmpty": {
+        "emptyBefore": true,
+        "singleClickOk": true,
+        "displayOk": true,
+        "from": "01/01/2026",
+        "to": "15/07/2026",
+        "display": "01/01/2026 - 15/07/2026"
+      },
+      "presetDates": {
+        "today": {
+          "from": "15/07/2026",
+          "to": "15/07/2026"
+        },
+        "yesterday": {
+          "from": "14/07/2026",
+          "to": "14/07/2026"
+        },
+        "thisWeek": {
+          "from": "13/07/2026",
+          "to": "15/07/2026"
+        },
+        "lastWeek": {
+          "from": "06/07/2026",
+          "to": "12/07/2026"
+        },
+        "thisMonth": {
+          "from": "01/07/2026",
+          "to": "15/07/2026"
+        },
+        "lastMonth": {
+          "from": "01/06/2026",
+          "to": "30/06/2026"
+        },
+        "thisYear": {
+          "from": "01/01/2026",
+          "to": "15/07/2026"
+        },
+        "lastYear": {
+          "from": "01/01/2025",
+          "to": "31/12/2025"
+        }
+      }
+    },
+    {
+      "id": "transaction",
+      "title": "Transaction Payment (Capture Date)",
+      "failed": [],
+      "checks": {
+        "popupOpens": true,
+        "popupHas8Presets": true,
+        "popupGridLayout": true,
+        "popupDaysRender": true,
+        "manualRangeOk": true,
+        "thisYearFromEmptyOk": true,
+        "thisYearSlashFormat": true,
+        "thisYearPresetOnReopen": true,
+        "preset_today": true,
+        "preset_yesterday": true,
+        "preset_thisWeek": true,
+        "preset_lastWeek": true,
+        "preset_thisMonth": true,
+        "preset_lastMonth": true,
+        "preset_thisYear": true,
+        "preset_lastYear": true,
+        "staleBindingOk": true
+      },
+      "thisYearFromEmpty": {
+        "emptyBefore": true,
+        "singleClickOk": true,
+        "displayOk": true,
+        "from": "01/01/2026",
+        "to": "15/07/2026",
+        "display": "01/01/2026 - 15/07/2026"
+      },
+      "presetDates": {
+        "today": {
+          "from": "15/07/2026",
+          "to": "15/07/2026"
+        },
+        "yesterday": {
+          "from": "14/07/2026",
+          "to": "14/07/2026"
+        },
+        "thisWeek": {
+          "from": "13/07/2026",
+          "to": "15/07/2026"
+        },
+        "lastWeek": {
+          "from": "06/07/2026",
+          "to": "12/07/2026"
+        },
+        "thisMonth": {
+          "from": "01/07/2026",
+          "to": "15/07/2026"
+        },
+        "lastMonth": {
+          "from": "01/06/2026",
+          "to": "30/06/2026"
+        },
+        "thisYear": {
+          "from": "01/01/2026",
+          "to": "15/07/2026"
+        },
+        "lastYear": {
+          "from": "01/01/2025",
+          "to": "31/12/2025"
+        }
+      }
+    }
+  ],
+  "parity": {
+    "presets": {
+      "today": true,
+      "yesterday": true,
+      "thisWeek": true,
+      "lastWeek": true,
+      "thisMonth": true,
+      "lastMonth": true,
+      "thisYear": true,
+      "lastYear": true
+    },
+    "thisYearFromEmpty": true,
+    "mismatches": []
+  },
+  "screenshots": [
+    "bank-popup.png",
+    "bank-trigger.png",
+    "dashboard-popup.png",
+    "dashboard-trigger.png",
+    "transaction-popup.png",
+    "transaction-trigger.png"
+  ]
+}

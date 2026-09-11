@@ -4,12 +4,12 @@ import MobileShell from "../components/layout/MobileShell.jsx";
 import { DASHBOARD_I18N } from "../translateFile/dashboardTranslate.js";
 import { buildApiUrl } from "../utils/apiUrl.js";
 import { fetchJson } from "../lib/fetchJson.js";
-import { readLoginLang, writeLoginLang } from "../lib/loginLang.js";
+import { useSyncedLoginLang, writeLoginLang } from "../lib/loginLang.js";
 import "./stub.css";
 
 export default function StubPage({ title, backTo = "/dashboard" }) {
   const [me, setMe] = useState(null);
-  const [lang, setLangState] = useState(() => readLoginLang());
+  const [lang, setLangState] = useSyncedLoginLang();
   const i18n = useMemo(() => DASHBOARD_I18N[lang] || DASHBOARD_I18N.en, [lang]);
 
   const setLang = useCallback((next) => {

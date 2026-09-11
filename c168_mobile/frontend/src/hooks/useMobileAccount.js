@@ -8,7 +8,7 @@ import {
   resolveMobileGroupIds,
 } from "../lib/dashboardScope.js";
 import { fetchJson, assertApiOk } from "../lib/fetchJson.js";
-import { readLoginLang, writeLoginLang } from "../lib/loginLang.js";
+import { useSyncedLoginLang, writeLoginLang } from "../lib/loginLang.js";
 import { canUseGroupOnlyMode, filterCompaniesForUserScope } from "../lib/loginScope.js";
 import {
   accountScopeIsGroupOnly,
@@ -49,6 +49,7 @@ const EMPTY_FORM = {
   account_id: "",
   name: "",
   role: "",
+  status: "active",
   password: "",
   remark: "",
   payment_alert: "0",
@@ -84,7 +85,7 @@ async function readJson(url, options = {}) {
 
 export function useMobileAccount() {
   const navigate = useNavigate();
-  const [lang, setLangState] = useState(() => readLoginLang());
+  const [lang, setLangState] = useSyncedLoginLang();
   const i18n = useMemo(() => accountText(lang), [lang]);
   const [me, setMe] = useState(null);
   const [companies, setCompanies] = useState([]);
@@ -529,9 +530,10 @@ export function useMobileAccount() {
     [i18n.detailError, notify, scope],
   );
 
-  const openEdit = useCallback(async () => {
-    if (!detail || !guarded(() => {})) return false;
-    const row = await loadDetail(detail);
+  const openEdit = useCallback(async (source) => {
+    const target = source || detail;
+    if (!target || !guarded(() => {})) return false;
+    const row = await loadDetail(target);
     if (!row) return false;
     const ledger = normalizeAccountLedgerScope(row.ledger_scope);
     setModalLedgerScope(ledger);
@@ -540,6 +542,7 @@ export function useMobileAccount() {
       account_id: upper(row.account_id),
       name: upper(row.name),
       role: row.role || "",
+      status: String(row.status || "active").toLowerCase(),
       password: "",
       remark: upper(row.remark),
       payment_alert: String(Number(row.payment_alert) ? "1" : "0"),

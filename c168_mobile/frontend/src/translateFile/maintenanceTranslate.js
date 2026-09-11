@@ -7,8 +7,6 @@ export const MAINTENANCE_I18N = {
     ...DASHBOARD_I18N.en,
 
     // More entry
-    maintenance: "Maintenance",
-    maintenanceDescription: "Transaction and payment records.",
     maintenanceBadge: "MAINTENANCE",
 
     // Hub
@@ -20,8 +18,6 @@ export const MAINTENANCE_I18N = {
     sectionSetup: "Setup",
     comingSoon: "Coming soon",
 
-    txMaintenanceTitle: "Transaction Maintenance",
-    txMaintenanceDesc: "Review transaction and data capture records.",
     txFeatures: "Audit records · Read only · Filters",
 
     payMaintenanceTitle: "Payment Maintenance",
@@ -29,22 +25,8 @@ export const MAINTENANCE_I18N = {
     payFeatures: "Payment history · Deleted records",
     deleteAccess: "Delete access",
 
-    bpMaintenanceTitle: "Bank Maintenance",
-    bpMaintenanceDesc: "Review and remove bank-process transactions.",
-    bpFeatures: "Bank process posts · Batch select · Delete",
-    bpSearchPlaceholder: "Process, account, bank or owner…",
-    bpNeedCompany: "Pick a Bank company to load records.",
-    bpScopeNote: "Company scope only. Same Post/Resend batch selects together.",
-    bpDeleteConfirmTitle: "Delete {n} bank-process record(s)?",
-    bpDeleteConfirmBody:
-      "Deleted records stay visible in history. Only bank-process-sourced transactions are removed.",
-
     setupDataCapture: "Data Capture",
     setupFormula: "Formula",
-    setupBank: "Bank Process",
-    setupBankDesc: "Bank process list, filters, status and forms.",
-    setupBankFeatures: "List · Status · Due · Add/Edit",
-    bankProcessTitle: "Bank Process",
     bankSearchPlaceholder: "Supplier, bank, owner…",
     bankStatus: "Status",
     bankShowActive: "Active",
@@ -70,7 +52,6 @@ export const MAINTENANCE_I18N = {
     bankRemarkPlaceholder: "Add a remark…",
     bankResend: "Resend",
     bankResendTitle: "Resend to Accounting Due",
-    bankProcessLabel: "Process",
     bankDayStart: "Day start",
     bankDayEnd: "Day end",
     bankFrequency: "Frequency",
@@ -224,8 +205,6 @@ export const MAINTENANCE_I18N = {
   zh: {
     ...DASHBOARD_I18N.zh,
 
-    maintenance: "维护",
-    maintenanceDescription: "交易与支付记录。",
     maintenanceBadge: "维护",
 
     hubTitle: "维护中心",
@@ -236,8 +215,6 @@ export const MAINTENANCE_I18N = {
     sectionSetup: "设置",
     comingSoon: "即将上线",
 
-    txMaintenanceTitle: "交易维护",
-    txMaintenanceDesc: "查看交易与数据采集记录。",
     txFeatures: "审计记录 · 只读 · 筛选",
 
     payMaintenanceTitle: "支付维护",
@@ -245,21 +222,8 @@ export const MAINTENANCE_I18N = {
     payFeatures: "支付历史 · 删除记录",
     deleteAccess: "删除权限",
 
-    bpMaintenanceTitle: "银行维护",
-    bpMaintenanceDesc: "查看并删除银行流程入账交易。",
-    bpFeatures: "银行流程入账 · 批次勾选 · 删除",
-    bpSearchPlaceholder: "流程、账户、银行或卡主…",
-    bpNeedCompany: "请选择 Bank 公司以加载记录。",
-    bpScopeNote: "仅支持公司范围。同一 Post/Resend 批次会一起勾选。",
-    bpDeleteConfirmTitle: "删除 {n} 条银行流程记录？",
-    bpDeleteConfirmBody: "删除后记录仍会显示在历史中。仅删除由银行流程入账的交易。",
-
     setupDataCapture: "数据采集",
     setupFormula: "公式",
-    setupBank: "银行流程",
-    setupBankDesc: "银行流程列表、筛选、状态与表单。",
-    setupBankFeatures: "列表 · 状态 · 待入账 · 新增/编辑",
-    bankProcessTitle: "银行流程",
     bankSearchPlaceholder: "供应商、银行、卡主…",
     bankStatus: "状态",
     bankShowActive: "启用",
@@ -285,7 +249,6 @@ export const MAINTENANCE_I18N = {
     bankRemarkPlaceholder: "填写备注…",
     bankResend: "重送",
     bankResendTitle: "重送到待入账",
-    bankProcessLabel: "流程",
     bankDayStart: "开始日",
     bankDayEnd: "结束日",
     bankFrequency: "频率",

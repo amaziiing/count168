@@ -46,11 +46,36 @@ import {
 } from "../lib/frankfurterRates.js";
 import { dashboardDataIsUsable } from "../lib/demoDashboard.js";
 import { assertApiOk, fetchJson } from "../lib/fetchJson.js";
-import { readLoginLang, writeLoginLang } from "../lib/loginLang.js";
+import { useSyncedLoginLang, writeLoginLang } from "../lib/loginLang.js";
 import { DASHBOARD_I18N } from "../translateFile/dashboardTranslate.js";
 import { canAccessDashboard, resolveMobileLandingPath } from "../utils/mobilePermissions.js";
 
 const COMPANIES_API = "api/transactions/get_owner_companies_api.php";
+
+/* Desktop parity (TransactionDashboardPage sticky package): freeze the full filter
+   package in sessionStorage so a refresh repaints Date+Group+Company+Currency as-is. */
+const MOBILE_DASHBOARD_FILTERS_KEY = "m-dashboard-filter-paint";
+
+function readSavedDashboardFilters() {
+  if (typeof sessionStorage === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(MOBILE_DASHBOARD_FILTERS_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    return p && typeof p === "object" ? p : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeSavedDashboardFilters(pkg) {
+  if (typeof sessionStorage === "undefined" || !pkg) return;
+  try {
+    sessionStorage.setItem(MOBILE_DASHBOARD_FILTERS_KEY, JSON.stringify(pkg));
+  } catch {
+    /* quota */
+  }
+}
 
 function sameStringList(a, b) {
   if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
@@ -129,25 +154,29 @@ function earningsRowsFromBootstrap(
 export function useMobileDashboard() {
   const navigate = useNavigate();
   const defaults = defaultDashboardDateRange();
-  const [lang, setLangState] = useState(() => readLoginLang());
+  const [lang, setLangState] = useSyncedLoginLang();
   const i18n = useMemo(() => DASHBOARD_I18N[lang] || DASHBOARD_I18N.en, [lang]);
 
   const setLang = useCallback((next) => {
     setLangState(writeLoginLang(next));
   }, []);
 
+  const savedFiltersRef = useRef(readSavedDashboardFilters());
+  const savedFilters = savedFiltersRef.current;
   const [me, setMe] = useState(null);
   const [companies, setCompanies] = useState([]);
   const [companyId, setCompanyId] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [groupsAllMode, setGroupsAllMode] = useState(false);
   const [groupAllMode, setGroupAllMode] = useState(false);
-  const [currency, setCurrency] = useState("MYR");
+  const [currency, setCurrency] = useState(
+    String(savedFilters?.currency || "MYR").toUpperCase(),
+  );
   const [currencies, setCurrencies] = useState(["MYR"]);
   const [currenciesReady, setCurrenciesReady] = useState(false);
-  const [dateFrom, setDateFrom] = useState(defaults.dateFrom);
-  const [dateTo, setDateTo] = useState(defaults.dateTo);
-  const [activePreset, setActivePreset] = useState("thisMonth");
+  const [dateFrom, setDateFrom] = useState(savedFilters?.dateFrom || defaults.dateFrom);
+  const [dateTo, setDateTo] = useState(savedFilters?.dateTo || defaults.dateTo);
+  const [activePreset, setActivePreset] = useState(savedFilters?.activePreset ?? "thisMonth");
   const [earningsPanelView, setEarningsPanelView] = useState("currency");
   const [bootstrap, setBootstrap] = useState(null);
   const [loadedScopeKey, setLoadedScopeKey] = useState("");
@@ -247,6 +276,34 @@ export function useMobileDashboard() {
         setSelectedGroup(initial.selectedGroup);
         setGroupsAllMode(initial.groupsAllMode);
         setGroupAllMode(initial.groupAllMode);
+
+        /* Desktop parity: repaint the saved filter package after a refresh —
+           scope parts are validated against this login's company/group list. */
+        const saved = savedFiltersRef.current;
+        const ownerKey = String(user.user_id ?? user.id ?? "");
+        if (saved && saved.ownerKey && saved.ownerKey === ownerKey) {
+          const savedCompany =
+            saved.companyId != null
+              ? scoped.find((c) => Number(c.id) === Number(saved.companyId))
+              : null;
+          if (savedCompany) {
+            setCompanyId(Number(savedCompany.id));
+            setSelectedGroup(saved.selectedGroup ?? null);
+            setGroupsAllMode(Boolean(saved.groupsAllMode));
+            setGroupAllMode(Boolean(saved.groupAllMode));
+          } else if (
+            !initial.companyId &&
+            saved.selectedGroup &&
+            resolveMobileGroupIds(scoped, user).includes(saved.selectedGroup)
+          ) {
+            setCompanyId(null);
+            setSelectedGroup(saved.selectedGroup);
+            setGroupsAllMode(Boolean(saved.groupsAllMode));
+            setGroupAllMode(Boolean(saved.groupAllMode));
+          }
+        } else if (saved && saved.ownerKey && ownerKey && saved.ownerKey !== ownerKey) {
+          savedFiltersRef.current = null;
+        }
       } catch (e) {
         if (ac.signal.aborted || e?.name === "AbortError") return;
         setError(e?.message || i18n.loadError);
@@ -326,6 +383,33 @@ export function useMobileDashboard() {
       }),
     [companyId, selectedGroup, groupAllMode, groupsAllMode, dateFrom, dateTo, currency],
   );
+
+  /* Desktop parity: persist the filter package so a refresh restores it. */
+  useEffect(() => {
+    if (!me || !companies.length) return;
+    writeSavedDashboardFilters({
+      ownerKey: String(me.user_id ?? me.id ?? ""),
+      companyId: companyId ?? null,
+      selectedGroup: selectedGroup ?? null,
+      groupsAllMode,
+      groupAllMode,
+      currency,
+      activePreset,
+      dateFrom,
+      dateTo,
+    });
+  }, [
+    me,
+    companies.length,
+    companyId,
+    selectedGroup,
+    groupsAllMode,
+    groupAllMode,
+    currency,
+    activePreset,
+    dateFrom,
+    dateTo,
+  ]);
 
   useEffect(() => {
     const hasCompany = Number.isFinite(Number(companyId)) && Number(companyId) > 0;

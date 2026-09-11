@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import MobileShell from "../../components/layout/MobileShell.jsx";
 import MobileSubpageHeader from "../../components/layout/MobileSubpageHeader.jsx";
 import { fetchJson } from "../../lib/fetchJson.js";
-import { readLoginLang, writeLoginLang } from "../../lib/loginLang.js";
+import { useSyncedLoginLang, writeLoginLang } from "../../lib/loginLang.js";
 import { MORE_I18N } from "../../translateFile/moreTranslate.js";
 import { buildApiUrl } from "../../utils/apiUrl.js";
 import {
@@ -15,9 +15,7 @@ import {
 import { fetchAutoRenewPendingCount } from "../../lib/autoRenewApi.js";
 import {
   canAccessAdmin,
-  canAccessMaintenance,
-  canAccessOwnership,
-  canShowReportEntry,
+  canAccessPaymentMaintenance,
   resolveMobileMoreBackPath,
 } from "../../utils/mobilePermissions.js";
 import { maintenanceText } from "../../translateFile/maintenanceTranslate.js";
@@ -28,7 +26,7 @@ export default function MorePage() {
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(true);
   const [autoRenewPending, setAutoRenewPending] = useState(0);
-  const [lang, setLangState] = useState(() => readLoginLang());
+  const [lang, setLangState] = useSyncedLoginLang();
   const i18n = useMemo(() => MORE_I18N[lang] || MORE_I18N.en, [lang]);
 
   const setLang = useCallback((next) => {
@@ -86,31 +84,13 @@ export default function MorePage() {
       to: "/more/users",
       icon: "fa-user-gear",
       title: i18n.userManagement,
-      description: i18n.userManagementDescription,
     });
   }
-  if (canAccessOwnership(me)) {
+  if (canAccessPaymentMaintenance(me)) {
     tools.push({
-      to: "/more/ownership",
-      icon: "fa-sitemap",
-      title: i18n.ownership,
-      description: i18n.ownershipDescription,
-    });
-  }
-  if (canAccessMaintenance(me)) {
-    tools.push({
-      to: "/maintenance",
-      icon: "fa-screwdriver-wrench",
-      title: mt.maintenance,
-      description: mt.maintenanceDescription,
-    });
-  }
-  if (canShowReportEntry(me)) {
-    tools.push({
-      to: "/report",
-      icon: "fa-chart-column",
-      title: i18n.report,
-      description: i18n.reportDescription,
+      to: "/maintenance/payment",
+      icon: "fa-wallet",
+      title: mt.payMaintenanceTitle,
     });
   }
   if (canAccessC168DomainPages(me)) {
@@ -118,13 +98,11 @@ export default function MorePage() {
       to: "/more/domain",
       icon: "fa-globe",
       title: i18n.domain,
-      description: i18n.domainDescription,
     });
     tools.push({
       to: "/more/announcement",
       icon: "fa-bullhorn",
       title: i18n.announcement,
-      description: i18n.announcementDescription,
     });
   }
   if (canAccessC168AutoRenew(me)) {
@@ -132,7 +110,6 @@ export default function MorePage() {
       to: "/more/auto-renew",
       icon: "fa-arrows-rotate",
       title: i18n.autoRenew,
-      description: i18n.autoRenewDescription,
       badge: autoRenewPending > 0 ? autoRenewPending : null,
     });
   }
@@ -140,7 +117,6 @@ export default function MorePage() {
     to: "/more/settings",
     icon: "fa-gear",
     title: i18n.settings,
-    description: i18n.settingsDescription,
   });
 
   return (
@@ -162,34 +138,39 @@ export default function MorePage() {
         />
       }
     >
-      <main className="m-more-page">
+      <main className="m-more-page m-more-page--settings">
         {loading ? (
           <div className="m-more-state">
             <i className="fas fa-spinner fa-spin" aria-hidden="true" />
           </div>
         ) : (
-          <div className="m-more-grid">
-            {tools.map((tool) => (
-              <Link key={tool.to} to={tool.to} className="m-more-card tap-scale">
-                <span className="m-more-icon">
-                  <i className={`fas ${tool.icon}`} aria-hidden="true" />
-                  {tool.badge != null ? (
-                    <span className="m-more-badge" aria-label={String(tool.badge)}>
-                      {tool.badge > 99 ? "99+" : tool.badge}
-                    </span>
-                  ) : null}
-                </span>
-                <span className="m-more-copy">
-                  <strong>{tool.title}</strong>
-                  <small>{tool.description}</small>
-                </span>
-                <span className="m-more-open">
-                  {i18n.open}
-                  <i className="fas fa-chevron-right" aria-hidden="true" />
-                </span>
-              </Link>
-            ))}
-          </div>
+          <>
+            <div className="m-more-grid">
+              {tools.map((tool) => (
+                <Link key={tool.to} to={tool.to} className="m-more-card tap-scale">
+                  <span className="m-more-icon">
+                    <i className={`fas ${tool.icon}`} aria-hidden="true" />
+                    {tool.badge != null ? (
+                      <span className="m-more-badge" aria-label={String(tool.badge)}>
+                        {tool.badge > 99 ? "99+" : tool.badge}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="m-more-copy">
+                    <strong>{tool.title}</strong>
+                  </span>
+                  <span className="m-more-open">
+                    {i18n.open}
+                    <i className="fas fa-chevron-right" aria-hidden="true" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+            <button type="button" className="m-more-logout tap-scale" onClick={() => void logout()}>
+              <i className="fas fa-right-from-bracket" aria-hidden="true" />
+              {i18n.logout}
+            </button>
+          </>
         )}
       </main>
     </MobileShell>

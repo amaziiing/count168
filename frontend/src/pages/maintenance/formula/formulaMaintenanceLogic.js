@@ -227,15 +227,27 @@ export function resolveFormulaBaseFromRow(row) {
 }
 
 export function createFormulaEditFormFromRow(row) {
-  const sourcePercent =
+  // Prefer the raw (un-evaluated) source so re-opening Edit and saving without
+  // touching Source doesn't bake in the display-rounded value (e.g. "0.1/2" must
+  // stay "0.1/2", not become "0.05"). Fall back to the display field for rows
+  // fetched before source_raw existed.
+  const rawSource = row?.source_raw;
+  const sourceCandidate =
+    rawSource != null && String(rawSource).trim() !== "" ? String(rawSource).trim() : null;
+  const displayCandidate =
     row?.source != null && String(row.source).trim() !== "" && String(row.source).trim() !== "-"
       ? String(row.source).trim()
-      : "1";
+      : null;
+  const sourcePercent = sourceCandidate ?? displayCandidate ?? "1";
   const base = resolveFormulaBaseFromRow(row);
   return {
     account_id: row?.account_id || "",
     source_ref: row?.source_ref != null ? String(row.source_ref) : "",
-    source_percent: formatSourcePercent(sourcePercent),
+    // source_percent is the value that gets sent back to the server on Save
+    // (see update_api.php's $sourcePercentInput). It must stay raw/unevaluated
+    // here — formatSourcePercent() is for display text only (used below in
+    // buildEditFormFormulaDisplay for the read-only Formula preview).
+    source_percent: sourcePercent,
     input_method: row?.input_method || "",
     formula: buildEditFormFormulaDisplay(base, sourcePercent),
     description: row?.description || "",
@@ -311,6 +323,10 @@ export function patchFormulaRowAfterSave(row, { id, editForm, accountLabel, serv
     account: accountLabel || row.account,
     source_ref: serverData?.source_ref ?? editForm.source_ref ?? row.source_ref,
     source: serverData?.source_summary_display ?? source,
+    // Keep the raw value that was actually submitted so re-opening Edit right
+    // after Save (without a full list refetch) still shows the original
+    // expression instead of the evaluated display value.
+    source_raw: editForm.source_percent ?? row.source_raw ?? row.source ?? "1",
     input_method: editForm.input_method ?? "",
     formula: serverData?.formula_display_paren ?? buildFormulaDisplayParenFromParts(formulaBase, source, enable),
     formula_edit: serverData?.formula_edit ?? formulaBase,

@@ -20,7 +20,7 @@
 .m-add-tx-panel {
   position: absolute;
   inset-inline: 0;
-  bottom: 0;
+  bottom: var(--m-inset-b, 0px);
   display: flex;
   max-height: min(90dvh, 100%);
   min-height: 0;

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>EazyCount</title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(180deg, #f4f7fc 0%, #e8effa 100%); color: #1e293b; gap: 14px;
+      -webkit-user-select: none; user-select: none;
+    }
+    img { width: 96px; height: 96px; border-radius: 22px; }
+    h1 { font-size: 18px; margin: 6px 0 0; }
+    p { font-size: 14px; color: #64748b; margin: 0; }
+    button {
+      margin-top: 10px; padding: 10px 34px; font-size: 15px; color: #fff;
+      background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
+      border: 0; border-radius: 999px; box-shadow: 0 6px 16px rgba(37, 99, 235, .35);
+    }
+  </style>
+</head>
+<body>
+  <img src="icon.png" alt="EazyCount" />
+  <h1>无法连接到服务器</h1>
+  <p>请检查网络后重试</p>
+  <button onclick="location.replace('https://count168.site/c168_mobile/frontend/dist/')">重新连接</button>
+</body>
+</html>

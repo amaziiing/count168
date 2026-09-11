@@ -1,4 +1,7 @@
-# C168 Mobile SPA — include inside count168.site server { } (HTTP or le-ssl)
+# C168 Mobile SPA — include inside count168.org / count168.site server { }
+# Install: sudo cp .../c168-mobile-locations.inc /etc/nginx/snippets/c168-mobile-locations.inc
+# Then: include /etc/nginx/snippets/c168-mobile-locations.inc;
+
 location ^~ /c168_mobile/frontend/dist/assets/ {
     expires 1y;
     add_header Cache-Control "public, immutable";

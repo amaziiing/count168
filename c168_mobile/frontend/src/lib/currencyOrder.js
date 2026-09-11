@@ -89,3 +89,53 @@ export async function orderCurrencyCodesForCompany(codes, companyId, signal) {
   const saved = resolveSavedCurrencyOrder(cid, apiOrder);
   return mergeCurrencyCodesWithSavedOrder(codes, saved);
 }
+
+/**
+ * Desktop parity: persist the user's currency pill order (per company, or per
+ * group when no company is selected).
+ */
+export async function saveUserCurrencyOrder(order, { companyId, groupId } = {}) {
+  const codes = Array.isArray(order)
+    ? order.map((c) => String(c || "").trim()).filter(Boolean)
+    : [];
+  const body = { order: codes };
+  const cid = companyId != null && companyId !== "" ? Number(companyId) : 0;
+  if (Number.isFinite(cid) && cid > 0) {
+    body.company_id = cid;
+  } else {
+    const gid = groupId != null ? String(groupId).trim().toUpperCase() : "";
+    if (gid) body.group_id = gid;
+  }
+  const { json } = await fetchJson(buildApiUrl("api/transactions/user_currency_order_api.php"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    credentials: "include",
+  });
+  return json;
+}
+
+export function persistCurrencyDisplayOrder(companyId, order) {
+  const cid = Number(companyId);
+  if (!Number.isFinite(cid) || cid <= 0 || !Array.isArray(order)) return;
+  try {
+    localStorage.setItem(
+      `${CURRENCY_DISPLAY_ORDER_LS_PREFIX}${cid}`,
+      JSON.stringify(order.map((c) => String(c).trim().toUpperCase())),
+    );
+  } catch {
+    /* private mode */
+  }
+}
+
+export function persistUserCurrencyDisplayOrder(order) {
+  if (!Array.isArray(order)) return;
+  try {
+    localStorage.setItem(
+      USER_CURRENCY_DISPLAY_ORDER_LS_KEY,
+      JSON.stringify(order.map((c) => String(c).trim().toUpperCase())),
+    );
+  } catch {
+    /* private mode */
+  }
+}

@@ -61,7 +61,7 @@ const CurrencyListCard = memo(function CurrencyListCard({
           const code = String(row.code).toUpperCase();
           const meta = isCompanyBreakdown ? null : getCurrencyMeta(code, lang);
           const color = getCurrencyColor(code, index);
-          const { primary } = resolveEarningsRowDisplayAmounts(
+          const { primary, native } = resolveEarningsRowDisplayAmounts(
             row,
             currencyCode,
             exchangeRates.rates,
@@ -107,6 +107,11 @@ const CurrencyListCard = memo(function CurrencyListCard({
                   <p className={`m-dash-currency-amount${negative ? " m-dash-currency-amount--neg" : ""}`}>
                     {amount}
                   </p>
+                  {showRate && native != null && Number(native) !== Number(primary) ? (
+                    <p className="m-dash-currency-native">
+                      ≈ {formatCurrency(native)} {code}
+                    </p>
+                  ) : null}
                   {showRate ? (
                     <p className="m-dash-currency-rate">
                       {i18n.rate} {exchangeRatesLoading ? "…" : rateLabel}

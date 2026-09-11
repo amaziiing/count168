@@ -7,6 +7,7 @@ import CurrencyListCard from "./CurrencyListCard.jsx";
 import DashboardKpiCard from "./DashboardKpiCard.jsx";
 import DashboardTrendChart from "./DashboardTrendChart.jsx";
 import EarningsSegmentControl from "./EarningsSegmentControl.jsx";
+import { DateFilterChip, ScopeFilterChip } from "./FilterChips.jsx";
 import FilterSheet from "./FilterSheet.jsx";
 import HeroSummaryCard from "./HeroSummaryCard.jsx";
 import ScopeBreadcrumb from "./ScopeBreadcrumb.jsx";
@@ -116,35 +117,16 @@ export default function DashboardPage() {
     .join(" › ");
 
   const stickyBar = (
-    <button
-      type="button"
-      onClick={() => setFilterOpen(true)}
-      className="m-filter-bar tap-scale"
-      aria-label={i18n.filter}
-    >
-      <div className="m-filter-bar-row">
-        <i className="far fa-calendar m-filter-bar-icon" aria-hidden="true" />
-        <span className="m-filter-bar-dates">{dash.dateRangeText}</span>
-        <span className="m-filter-bar-currency">{dash.currency}</span>
-        <span className="m-filter-bar-action">
-          <i className="fas fa-filter" aria-hidden="true" />
-        </span>
-      </div>
-
-      <div className="m-filter-bar-scope m-filter-bar-scope-row" title={scopeTitle}>
-        <div className="m-filter-bar-scope-main">
-          <ScopeBreadcrumb
-            i18n={i18n}
-            groupId={groupId}
-            companyCode={companyCode}
-            groupsAllMode={dash.groupsAllMode}
-            groupAllMode={dash.groupAllMode}
-            groupOnlyMode={dash.groupOnlyMode}
-          />
-        </div>
-        <span className="m-filter-bar-switch">{i18n.switchCompany || "Switch"}</span>
-      </div>
-    </button>
+    <div className="m-fchip-bar">
+      <DateFilterChip dash={dash} i18n={i18n} />
+      <ScopeFilterChip
+        dash={dash}
+        i18n={i18n}
+        groupId={groupId}
+        companyCode={companyCode}
+        groupOnlyMode={dash.groupOnlyMode}
+      />
+    </div>
   );
 
   return (
@@ -159,9 +141,6 @@ export default function DashboardPage() {
       stickyBar={stickyBar}
       lang={dash.lang}
       onLangChange={dash.setLang}
-      onChromeOpen={() => setFilterOpen(false)}
-      overlayOpen={filterOpen}
-      overlay={<FilterSheet open={filterOpen} onClose={() => setFilterOpen(false)} dash={dash} />}
     >
       <CompanyAccessModal
         open={Boolean(dash.accessModal?.open)}
@@ -304,6 +283,8 @@ export default function DashboardPage() {
               dash.earningsPanelView === "netProfitFor" ? i18n.companies || i18n.company : i18n.currency
             }
             isCompanyBreakdown={dash.earningsPanelView === "netProfitFor"}
+            exchangeRates={dash.exchangeRates}
+            exchangeRatesLoading={dash.exchangeRatesLoading}
             tabs={
               earningsSegmentTabs.length >= 2 ? (
                 <EarningsSegmentControl

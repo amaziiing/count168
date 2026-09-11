@@ -1,20 +1,6 @@
-/* Mobile admin user management — extends account.css card/sheet look.
-   Sizing follows c168_mobile tokens (1rem = 16px), NOT the desktop 62.5% scale. */
-
-.m-admin-card-actions {
-  justify-content: space-between;
-}
-
-.m-admin-owner-tag {
-  border-radius: var(--m-radius-pill);
-  background: var(--m-grad-brand);
-  padding: 0.24rem 0.7rem;
-  color: #fff;
-  font-size: var(--m-text-badge-ratio);
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
+/* Mobile admin user management — extends account.css sheet/chrome look.
+   Sizing follows c168_mobile tokens (1rem = 16px), NOT the desktop 62.5% scale.
+   User cards use the shared .m-user-card styles from account.css. */
 
 /* Detail sheet ------------------------------------------------------- */
 

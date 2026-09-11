@@ -19,7 +19,9 @@ import {
   Pill,
   Section,
 } from "../dashboard/FilterSheet.jsx";
+import { MiniSheet } from "../dashboard/FilterChips.jsx";
 import ScopeBreadcrumb from "../dashboard/ScopeBreadcrumb.jsx";
+import "../dashboard/filter-chips.css";
 
 export function MaintenanceSearchBar({ value, onChange, placeholder, clearAriaLabel }) {
   return (
@@ -72,9 +74,6 @@ export function MaintenanceFilterBar({
       <div className="m-filter-bar-row">
         <i className="far fa-calendar m-filter-bar-icon" aria-hidden="true" />
         <span className="m-filter-bar-dates">{formatRangeLabel(dateFrom, dateTo)}</span>
-        <span className="m-filter-bar-action">
-          <i className="fas fa-filter" aria-hidden="true" />
-        </span>
       </div>
       <div className="m-filter-bar-scope m-filter-bar-scope-row">
         <div className="m-filter-bar-scope-main">
@@ -86,7 +85,6 @@ export function MaintenanceFilterBar({
             groupOnlyMode={groupMode && !groupsAllMode}
           />
         </div>
-        <span className="m-filter-bar-switch">{i18n.switchCompany || "Switch"}</span>
       </div>
     </button>
   );
@@ -138,11 +136,17 @@ function draftScope(draft) {
  * Unified maintenance filter sheet — mirrors dashboard/transaction FilterSheet
  * (date range + quick select + group/company + apply), plus maintenance-only
  * sections: Process (transaction) or Transaction type (payment).
+ *
+ * `section` splits the same sheet into the dashboard-style chip flow:
+ *   "date"  → only date range + quick select (date chip)
+ *   "scope" → only group/company pills (scope chip)
+ *   "full"  → everything (legacy single-sheet usage)
  */
 export function MaintenanceFilterSheet({
   open,
   onClose,
   i18n,
+  section = "full",
   dateFrom,
   dateTo,
   activePreset = "",
@@ -299,6 +303,9 @@ export function MaintenanceFilterSheet({
   const maxDay = todayYmd();
   const span = daysInclusive(draft.dateFrom, draft.dateTo);
   const daysLabel = (i18n.daysCount || "{n} days").replace("{n}", String(span));
+  const showDate = section === "full" || section === "date";
+  const showScope = section === "full" || section === "scope";
+  const showExtras = section === "full";
 
   return (
     <div
@@ -326,54 +333,58 @@ export function MaintenanceFilterSheet({
         </div>
 
         <div ref={bodyRef} className="m-sheet-body m-sheet-body--spaced">
-          <Section
-            title={i18n.dateRange}
-            trailing={
-              span > 0 ? (
-                <span
-                  className={`m-filter-span-badge${
-                    draft.activePreset ? " m-filter-span-badge--preset" : " m-filter-span-badge--custom"
-                  }`}
-                >
-                  {draft.activePreset ? daysLabel : `${i18n.customRange} · ${daysLabel}`}
-                </span>
-              ) : null
-            }
-          >
-            <DateRangeRow
-              fromLabel={i18n.from}
-              toLabel={i18n.toDate}
-              dateFrom={draft.dateFrom}
-              dateTo={draft.dateTo}
-              active={rangeOpen}
-              onOpen={() => setRangeOpen(true)}
-            />
-          </Section>
+          {showDate && (
+            <Section
+              title={i18n.dateRange}
+              trailing={
+                span > 0 ? (
+                  <span
+                    className={`m-filter-span-badge${
+                      draft.activePreset ? " m-filter-span-badge--preset" : " m-filter-span-badge--custom"
+                    }`}
+                  >
+                    {draft.activePreset ? daysLabel : `${i18n.customRange} · ${daysLabel}`}
+                  </span>
+                ) : null
+              }
+            >
+              <DateRangeRow
+                fromLabel={i18n.from}
+                toLabel={i18n.toDate}
+                dateFrom={draft.dateFrom}
+                dateTo={draft.dateTo}
+                active={rangeOpen}
+                onOpen={() => setRangeOpen(true)}
+              />
+            </Section>
+          )}
 
-          <Section title={i18n.quickSelect}>
-            <div className="m-filter-pill-wrap">
-              {PERIOD_PRESET_KEYS.map((key) => (
-                <Pill
-                  key={key}
-                  active={draft.activePreset === key}
-                  onClick={() => {
-                    const range = periodPresetRange(key);
-                    if (!range) return;
-                    setDraft((prev) => ({
-                      ...prev,
-                      activePreset: key,
-                      dateFrom: range.dateFrom,
-                      dateTo: range.dateTo,
-                    }));
-                  }}
-                >
-                  {dashboardLabel(i18n, key)}
-                </Pill>
-              ))}
-            </div>
-          </Section>
+          {showDate && (
+            <Section title={i18n.quickSelect}>
+              <div className="m-filter-pill-wrap">
+                {PERIOD_PRESET_KEYS.map((key) => (
+                  <Pill
+                    key={key}
+                    active={draft.activePreset === key}
+                    onClick={() => {
+                      const range = periodPresetRange(key);
+                      if (!range) return;
+                      setDraft((prev) => ({
+                        ...prev,
+                        activePreset: key,
+                        dateFrom: range.dateFrom,
+                        dateTo: range.dateTo,
+                      }));
+                    }}
+                  >
+                    {dashboardLabel(i18n, key)}
+                  </Pill>
+                ))}
+              </div>
+            </Section>
+          )}
 
-          {groupIds.length > 0 && (
+          {showScope && groupIds.length > 0 && (
             <Section title={i18n.groupId}>
               <div className="m-filter-pill-wrap">
                 {groupIds.map((gid) => (
@@ -395,7 +406,8 @@ export function MaintenanceFilterSheet({
             </Section>
           )}
 
-          <Section title={i18n.company}>
+          {showScope && (
+            <Section title={i18n.company}>
             <div className="m-filter-pill-wrap">
               {pickable.map((c) => {
                 const label = String(c.company_id).toUpperCase();
@@ -424,8 +436,9 @@ export function MaintenanceFilterSheet({
               })}
             </div>
           </Section>
+          )}
 
-          {withProcess && (
+          {showExtras && withProcess && (
             <Section title={i18n.process}>
               <label className="m-mt-field">
                 <select
@@ -443,7 +456,7 @@ export function MaintenanceFilterSheet({
             </Section>
           )}
 
-          {Array.isArray(types) && types.length > 0 && (
+          {showExtras && Array.isArray(types) && types.length > 0 && (
             <Section title={i18n.transactionType}>
               <div className="m-filter-pill-scroll">
                 <Pill
@@ -465,7 +478,7 @@ export function MaintenanceFilterSheet({
             </Section>
           )}
 
-          {withBankStatus ? (
+          {showExtras && withBankStatus ? (
             <Section title={i18n.bankStatus || i18n.status || "Status"}>
               <div className="m-filter-pill-wrap">
                 <Pill active={!!draft.statusFilters?.showActive} onClick={() => toggleStatus("showActive")}>
@@ -487,7 +500,7 @@ export function MaintenanceFilterSheet({
             </Section>
           ) : null}
 
-          {Array.isArray(currencies) && currencies.length > 0 ? (
+          {showExtras && Array.isArray(currencies) && currencies.length > 0 ? (
             <Section title={i18n.currency}>
               <div className="m-filter-pill-wrap">
                 <Pill
@@ -509,7 +522,7 @@ export function MaintenanceFilterSheet({
             </Section>
           ) : null}
 
-          {readOnlyNote || readOnlyNoteText ? (
+          {showExtras && (readOnlyNote || readOnlyNoteText) ? (
             <p className="m-mt-readonly-note">
               <i className="fas fa-circle-info" aria-hidden="true" />{" "}
               {readOnlyNoteText || i18n.readOnlyNote}
@@ -553,5 +566,92 @@ export function MaintenanceFilterSheet({
         }
       />
     </div>
+  );
+}
+
+/* ── Dashboard/transaction-style chips for the sticky bar ────────────────── */
+
+export function MaintenanceDateChip({ i18n, dateFrom, dateTo, onOpen }) {
+  return (
+    <button type="button" className="m-fchip tap-scale" onClick={onOpen} aria-label={i18n.dateRange}>
+      <i className="far fa-calendar m-fchip-icon" aria-hidden="true" />
+      <span className="m-fchip-value">{formatRangeLabel(dateFrom, dateTo)}</span>
+      <i className="fas fa-chevron-down m-fchip-caret" aria-hidden="true" />
+    </button>
+  );
+}
+
+export function MaintenanceScopeChip({
+  i18n,
+  groupMode,
+  groupsAllMode = false,
+  selectedGroup,
+  selectedCompany,
+  onOpen,
+}) {
+  const groupId = String(
+    (groupsAllMode ? "" : groupMode ? selectedGroup : selectedCompany?.group_id) || "",
+  )
+    .trim()
+    .toUpperCase();
+  const companyCode =
+    groupsAllMode || groupMode
+      ? ""
+      : String(selectedCompany?.company_id || "").trim().toUpperCase();
+  return (
+    <button type="button" className="m-fchip tap-scale" onClick={onOpen} aria-label={i18n.filter}>
+      <span className="m-fchip-value">
+        <ScopeBreadcrumb
+          i18n={i18n}
+          groupId={groupId}
+          companyCode={companyCode}
+          groupsAllMode={groupsAllMode}
+          groupOnlyMode={groupMode && !groupsAllMode}
+        />
+      </span>
+      <i className="fas fa-chevron-down m-fchip-caret" aria-hidden="true" />
+    </button>
+  );
+}
+
+/** Transaction type chip — own mini sheet, tap a row to apply instantly. */
+export function MaintenanceTypeChip({ i18n, types, value, onChange }) {
+  const [open, setOpen] = useState(false);
+  useOverlayLock(open, () => setOpen(false));
+  const label = value || i18n.allTypes;
+  const options = [{ v: "", label: i18n.allTypes }, ...types.map((t) => ({ v: t, label: t }))];
+
+  return (
+    <>
+      <button type="button" className="m-fchip tap-scale" onClick={() => setOpen(true)} aria-label={i18n.transactionType}>
+        <i className="fas fa-shuffle m-fchip-icon" aria-hidden="true" />
+        <span className="m-fchip-value">{label}</span>
+        <i className="fas fa-chevron-down m-fchip-caret" aria-hidden="true" />
+      </button>
+
+      <MiniSheet open={open} onClose={() => setOpen(false)} title={i18n.transactionType}>
+        <div className="m-mt-type-list" role="listbox" aria-label={i18n.transactionType}>
+          {options.map((opt) => {
+            const active = value === opt.v;
+            return (
+              <button
+                key={opt.v || "__all"}
+                type="button"
+                role="option"
+                aria-selected={active}
+                className={`m-mt-type-item tap-scale${active ? " is-active" : ""}`}
+                onClick={() => {
+                  onChange?.(opt.v);
+                  setOpen(false);
+                }}
+              >
+                <span>{opt.label}</span>
+                {active ? <i className="fas fa-check" aria-hidden="true" /> : null}
+              </button>
+            );
+          })}
+        </div>
+      </MiniSheet>
+    </>
   );
 }

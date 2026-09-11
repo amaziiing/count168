@@ -4,6 +4,15 @@ const VERSION_RE = /Version\s*(\d+(?:\.\d+)*)/i;
 const NUMBERED_PREFIX_RE = /^\s*(?:\d{1,2}[\.、\)]\s+|[-•*]\s+)/;
 const THANK_RE = /感谢|thank\s+you/i;
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function decodeText(value) {
   return String(value ?? "")
     .replace(/\u00a0/g, " ")
@@ -23,11 +32,23 @@ function stripNumberedPrefix(text) {
   return decodeText(text).replace(NUMBERED_PREFIX_RE, "");
 }
 
+function stripNumberedPrefixHtml(html) {
+  return String(html ?? "").replace(NUMBERED_PREFIX_RE, "");
+}
+
+/**
+ * Returns both the plain text (for de-dup/matching) and the sanitized inner HTML
+ * (so links inside a list item keep working) for each <li>.
+ */
 function collectListItems(root) {
   const items = [];
   root.querySelectorAll("li").forEach((li) => {
     const text = decodeText(li.textContent);
-    if (text) items.push(stripNumberedPrefix(text));
+    if (!text) return;
+    items.push({
+      text: stripNumberedPrefix(text),
+      html: stripNumberedPrefixHtml((li.innerHTML || "").trim()),
+    });
   });
   return items;
 }
@@ -80,7 +101,7 @@ function collectNumberedFromPlain(blocks) {
   blocks.forEach((line) => {
     if (NUMBERED_PREFIX_RE.test(line)) {
       const text = stripNumberedPrefix(line);
-      if (text) items.push(text);
+      if (text) items.push({ text, html: escapeHtml(text) });
       return;
     }
     rest.push(line);
@@ -143,12 +164,12 @@ export function parseAnnouncementCard({ title = "", content = "" } = {}) {
       if (!sectionLabel) sectionLabel = line.slice(0, 80);
       return;
     }
-    if (items.some((item) => item === stripNumberedPrefix(line))) return;
+    if (items.some((item) => item.text === stripNumberedPrefix(line))) return;
     if (THANK_RE.test(line)) thankYouBlocks.push(line);
     else introBlocks.push(line);
   });
 
-  const plainBlob = [safeTitle, ...blocks, ...items].join("\n");
+  const plainBlob = [safeTitle, ...blocks, ...items.map((item) => item.text)].join("\n");
   const version = extractVersion(safeTitle, plainBlob, html);
 
   return {
@@ -158,7 +179,7 @@ export function parseAnnouncementCard({ title = "", content = "" } = {}) {
     /** First non-thanks prose block; UI may fall back to versionUpdated label. */
     subtitle: introBlocks[0] || "",
     intro: introBlocks.slice(1),
-    items,
+    items: items.map((item) => item.html),
     thankYou: thankYouBlocks.join(" "),
   };
 }

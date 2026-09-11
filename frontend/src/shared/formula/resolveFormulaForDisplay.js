@@ -58,7 +58,13 @@ export function resolveEffectiveSourcePercentForRow(row) {
   }
 
   if (dbPctRaw !== "") {
-    return { source: formatSourcePercent(dbPctRaw), enable: enableDb || 1 };
+    // Keep the raw DB value as-is (e.g. "0.1/2") — this is the canonical
+    // source used to rebuild row state, re-populate the Edit Formula form,
+    // and re-save. formatSourcePercent() evaluates expressions and must only
+    // be used for pure UI display (see formatSourcePercentForDisplay call
+    // sites), never here — otherwise the original expression is permanently
+    // replaced by its evaluated value on the next reload/save.
+    return { source: dbPctRaw, enable: enableDb || 1 };
   }
 
   return { source: "1", enable: 0 };

@@ -96,6 +96,7 @@ export const LOGIN_I18N = {
     confirm: "Confirm",
     maintenanceLabel: "System Maintenance:",
     unknownError: "Unknown error",
+    sessionExpired: "Your session has expired. Please login again.",
   },
   zh: {
     admin: "管理员",
@@ -118,6 +119,7 @@ export const LOGIN_I18N = {
     confirm: "确认",
     maintenanceLabel: "系统维护中:",
     unknownError: "未知错误",
+    sessionExpired: "登录已过期，请重新登录",
   },
 };
 

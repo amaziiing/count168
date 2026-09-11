@@ -10,6 +10,7 @@ import {
 } from "../../utils/company/sharedCompanyFilter.js";
 import { useAuthBackground } from "./useAuthBackground.js";
 import { safeLocal, safeSession } from "../../utils/storage/safeStorage.js";
+import { SESSION_EXPIRED_NOTICE_KEY } from "../../utils/auth/sessionExpiryGuard.js";
 import { extractPlainTextFromRichText } from "../../utils/content/richTextSanitizer.js";
 import PasswordInput from "../../components/PasswordInput.jsx";
 
@@ -215,6 +216,13 @@ export default function LoginPage() {
     safeSession.removeItem("ec_maintenance_notice");
     showNotice(msg, i18n.notice);
   }, [showNotice, i18n.notice]);
+
+  // Redirected here by the session expiry guard (idle timeout / kicked session).
+  useEffect(() => {
+    if (safeSession.getItem(SESSION_EXPIRED_NOTICE_KEY) !== "1") return;
+    safeSession.removeItem(SESSION_EXPIRED_NOTICE_KEY);
+    showNotice(i18n.sessionExpired, i18n.notice);
+  }, [showNotice, i18n.notice, i18n.sessionExpired]);
 
   useEffect(() => {
     document.body.classList.remove(

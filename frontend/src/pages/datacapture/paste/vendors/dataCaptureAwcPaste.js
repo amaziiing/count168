@@ -91,6 +91,63 @@ function extractNonEmptyHtmlCellTokens(table) {
     return tokens;
 }
 
+/** Per-row {text, colspan} records for one <table>. Colspan is kept so a rectangular grid (an Excel copy) can be told apart from the portal's ragged el-table markup. Empty <tr>s are skipped, matching extractNonEmptyHtmlCellTokens. */
+function extractTableCellRecords(table) {
+    const rows = [];
+    table.querySelectorAll("tr").forEach((tr) => {
+        const cells = [];
+        tr.querySelectorAll("td, th").forEach((cell) => {
+            const colspan = Math.max(1, parseInt(cell.getAttribute("colspan") || "1", 10) || 1);
+            const text = (cell.textContent || cell.innerText || "").replace(/\s+/g, " ").trim();
+            cells.push({ text, colspan });
+        });
+        if (cells.length) rows.push(cells);
+    });
+    return rows;
+}
+
+/**
+ * A clean rectangular grid — every row the same colspan-expanded width — is an
+ * Excel/Sheets copy of this report, not the portal's el-table (whose
+ * row-selection checkbox <td> is missing on the row the drag-select started on
+ * and absent on Sub Total rows, so portal selections are never rectangular).
+ * Build it row-by-row so every row and every real column survive verbatim.
+ *
+ * This must never go through parseAWCPatternBasedData: that re-groups a
+ * flattened token stream by row-start markers designed for the portal's
+ * vertical dump, and silently drops every row whose marker it cannot
+ * recognize — user ids starting with a digit ("717a") or an uppercase letter
+ * ("KZ999") get glued into the previous row's group and truncated away by the
+ * most-common-column-count pass.
+ *
+ * @param cellRows {Array<Array<{text: string, colspan: number}>>}
+ * @returns {string[][] | null} null when the markup is not one rectangular grid.
+ */
+export function buildAwcWinLossMatrixFromCellRows(cellRows) {
+    if (!Array.isArray(cellRows) || cellRows.length < 2) return null;
+
+    const expandedWidth = (cells) => cells.reduce((sum, cell) => sum + cell.colspan, 0);
+    const width = expandedWidth(cellRows[0]);
+    if (width < 3) return null;
+    if (cellRows.some((cells) => expandedWidth(cells) !== width)) return null;
+
+    const matrix = cellRows.map((cells) => {
+        const row = [];
+        cells.forEach((cell) => {
+            row.push(cell.text);
+            for (let i = 1; i < cell.colspan; i += 1) row.push("");
+        });
+        return row;
+    });
+
+    // A leading all-empty column is a structural selection/checkbox column,
+    // not report data — the first data column is always Currency/ID text.
+    if (matrix.every((row) => row[0] === "")) {
+        matrix.forEach((row) => row.shift());
+    }
+    return matrix;
+}
+
 function buildAwcWinLossMatrixFromHtml(html) {
     if (!html || !/<table\b/i.test(html)) return null;
     try {
@@ -104,6 +161,22 @@ function buildAwcWinLossMatrixFromHtml(html) {
             (t) => !t.parentElement?.closest("table"),
         );
         if (!tables.length) return null;
+
+        // Excel/Sheets copies of this report land as one rectangular table —
+        // build it directly so every row and column survive. The gate runs on
+        // the same tokens the flatten path would see, so what gets claimed is
+        // unchanged; only the matrix build differs.
+        if (tables.length === 1) {
+            const rectangular = buildAwcWinLossMatrixFromCellRows(
+                extractTableCellRecords(tables[0]),
+            );
+            if (rectangular) {
+                const rectangularTokens = rectangular.flat().filter((token) => token !== "");
+                if (!looksLikeAwcWinLossReportTokens(rectangularTokens)) return null;
+                return rectangular;
+            }
+        }
+
         const tokens = tables.flatMap((table) => extractNonEmptyHtmlCellTokens(table));
         if (!looksLikeAwcWinLossReportTokens(tokens)) return null;
         return parseAWCPatternBasedData(tokens);

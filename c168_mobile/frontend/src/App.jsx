@@ -17,11 +17,7 @@ import DomainPage from "./pages/domain/DomainPage.jsx";
 import AnnouncementPage from "./pages/announcement/AnnouncementPage.jsx";
 import AutoRenewPage from "./pages/autorenew/AutoRenewPage.jsx";
 import OwnershipPage from "./pages/ownership/OwnershipPage.jsx";
-import MaintenanceHubPage from "./pages/maintenance/MaintenanceHubPage.jsx";
-import MaintenanceTransactionPage from "./pages/maintenance/MaintenanceTransactionPage.jsx";
 import MaintenancePaymentPage from "./pages/maintenance/MaintenancePaymentPage.jsx";
-import MaintenanceBankprocessPage from "./pages/maintenance/MaintenanceBankprocessPage.jsx";
-import BankProcessListPage from "./pages/bankprocess/BankProcessListPage.jsx";
 import ReportHubPage from "./pages/report/ReportHubPage.jsx";
 import DomainReportPage from "./pages/report/DomainReportPage.jsx";
 import CustomerReportPage from "./pages/report/CustomerReportPage.jsx";
@@ -58,11 +54,7 @@ export default function App() {
           <Route path="history" element={<TransactionHistoryPage />} />
         </Route>
         <Route path="/account" element={<AccountPage />} />
-        <Route path="/maintenance" element={<MaintenanceHubPage />} />
-        <Route path="/maintenance/transaction" element={<MaintenanceTransactionPage />} />
         <Route path="/maintenance/payment" element={<MaintenancePaymentPage />} />
-        <Route path="/maintenance/bankprocess" element={<MaintenanceBankprocessPage />} />
-        <Route path="/maintenance/bank-process" element={<BankProcessListPage />} />
         <Route path="/more" element={<MorePage />} />
         <Route path="/more/settings" element={<SettingsPage />} />
         <Route path="/more/users" element={<AdminUsersPage />} />

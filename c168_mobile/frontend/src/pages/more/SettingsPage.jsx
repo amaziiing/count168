@@ -5,7 +5,7 @@ import MobileSubpageHeader from "../../components/layout/MobileSubpageHeader.jsx
 import MobileLangSwitch from "../../components/layout/MobileLangSwitch.jsx";
 import MobileThemeSwitch from "../../components/layout/MobileThemeSwitch.jsx";
 import { fetchJson } from "../../lib/fetchJson.js";
-import { readLoginLang, writeLoginLang } from "../../lib/loginLang.js";
+import { useSyncedLoginLang, writeLoginLang } from "../../lib/loginLang.js";
 import { readLoginTheme, writeLoginTheme } from "../../lib/loginTheme.js";
 import { MORE_I18N } from "../../translateFile/moreTranslate.js";
 import { buildApiUrl } from "../../utils/apiUrl.js";
@@ -25,7 +25,7 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [lang, setLangState] = useState(() => readLoginLang());
+  const [lang, setLangState] = useSyncedLoginLang();
   const [theme, setThemeState] = useState(() => readLoginTheme());
   const i18n = useMemo(() => MORE_I18N[lang] || MORE_I18N.en, [lang]);
 
@@ -86,7 +86,6 @@ export default function SettingsPage() {
           backTo="/more"
           backAriaLabel={i18n.back}
           title={i18n.settings}
-          subtitle={i18n.settingsSubtitle}
         />
       }
     >
