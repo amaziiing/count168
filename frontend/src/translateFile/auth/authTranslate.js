@@ -97,11 +97,6 @@ export const LOGIN_I18N = {
     maintenanceLabel: "System Maintenance:",
     unknownError: "Unknown error",
     sessionExpired: "Your session has expired. Please login again.",
-    mobileApp: "Mobile app",
-    mobileAppDownload: "Download APK",
-    mobileSite: "Mobile site",
-    desktopModeHint:
-      "You are browsing the desktop site on a phone — the app or the mobile site works better:",
   },
   zh: {
     admin: "管理员",
@@ -125,10 +120,6 @@ export const LOGIN_I18N = {
     maintenanceLabel: "系统维护中:",
     unknownError: "未知错误",
     sessionExpired: "登录已过期，请重新登录",
-    mobileApp: "手机版 App",
-    mobileAppDownload: "下载 APK",
-    mobileSite: "手机版网页",
-    desktopModeHint: "检测到你在手机上浏览桌面版——建议下载 App 或改用手机版：",
   },
 };
 
