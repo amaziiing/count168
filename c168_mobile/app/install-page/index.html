@@ -123,11 +123,12 @@
     var standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
 
     // 二维码按域名区分：各域名用自己下载页的二维码（qr-org.png / qr-com.png），其余用 qr.png
+    // 带 ?v= 版本号：Cloudflare 会缓存旧 404/旧图，加参数可立刻拿到新文件
     var host = location.hostname;
     if (/(^|\.)count168\.org$/i.test(host)) {
-      document.getElementById("qr").src = "qr-org.png";
+      document.getElementById("qr").src = "qr-org.png?v=1";
     } else if (/(^|\.)count168\.com$/i.test(host)) {
-      document.getElementById("qr").src = "qr-com.png";
+      document.getElementById("qr").src = "qr-com.png?v=1";
     }
 
     if (inWeChat) document.getElementById("wechatTip").classList.add("show");
