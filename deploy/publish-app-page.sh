@@ -29,18 +29,10 @@ for f in "$SRC"/*; do
   cp -f "$f" "$DST/$(basename "$f")"
 done
 
-# APK：不进 git，保留线上现有文件；缺失时从同机 site 目录借（或仓库 install-page 里手放的）
+# APK 不进 git，也**绝不跨域名复制**：三个域名的 App 必须各自一份（各自指向自己的域名），
+# 用 c168_mobile/app/build-apk-for-site.mjs 出包后分别上传到对应域名的 /app/。
 if ! compgen -G "$DST/*.apk" >/dev/null 2>&1; then
-  for cand in /var/www/count168/app "$SRC"; do
-    if compgen -G "$cand/*.apk" >/dev/null 2>&1; then
-      cp -f "$cand"/*.apk "$DST"/
-      echo "==> /app apk copied from $cand"
-      break
-    fi
-  done
-fi
-if ! compgen -G "$DST/*.apk" >/dev/null 2>&1; then
-  echo "WARN: no *.apk in $DST — Android 下载按钮会 404；手动放入 EazyCount-vX.Y.apk"
+  echo "WARN: $DST 里没有 *.apk — 该域名的 Android 下载会 404（出包见 c168_mobile/app/README.md）"
 fi
 
 if command -v chcon >/dev/null 2>&1; then

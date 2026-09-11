@@ -62,3 +62,6 @@ c168_mobile/app/android/local.properties
 
 # built apk copies
 c168_mobile/app/*.apk
+
+# built apk outputs (per-domain)
+c168_mobile/app/dist-apk/

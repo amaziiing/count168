@@ -14,30 +14,49 @@ app/
 ├─ android/                # Cap add 生成的原生工程
 │  ├─ keystore.properties  # 签名参数(已 gitignore)
 │  └─ local.properties     # 本机 SDK 路径(已 gitignore,每台机器各写各的)
-├─ install-page/           # 下载页源码(index.html + logo.png + qr.png + qr-org.png),随 deploy 自动发布到 /app/
+├─ install-page/           # 下载页源码(index.html + logo.png + qr.png + qr-org.png + qr-com.png),随 deploy 自动发布到 /app/
+├─ build-apk-for-site.mjs  # 按域名出包(site/org/com 各一份,server.url 指向各自域名)
+├─ dist-apk/               # 出包产物(已 gitignore)
 ├─ make-splash.mjs         # 用 sharp 生成白底居中 logo 启动图
-└─ make-qr.mjs             # 生成下载页二维码 qr.png(count168.site) / qr-org.png(count168.org)
+└─ make-qr.mjs             # 生成下载页二维码 qr.png(count168.site) / qr-org.png(count168.org) / qr-com.png(count168.com)
 ```
 
-## 日常出包(二选一)
+## 日常出包（按域名各出一份）
 
-**A. 命令行(本机已配好 SDK + 签名):**
+三个域名的数据各自独立，所以 **site / org / com 必须各出一份 APK**（同一包名，用户装哪个就连哪个域名）：
 
 ```bash
 cd c168_mobile/app
-npm run build:apk
-# 产物: android/app/build/outputs/apk/release/app-release.apk
+npm i                    # 首次：装 @capacitor/cli 等
+npm run build:apk:site    # → dist-apk/EazyCount-v1.1-site.apk
+npm run build:apk:org     # → dist-apk/EazyCount-v1.1-org.apk
+npm run build:apk:com     # → dist-apk/EazyCount-v1.1-com.apk
 ```
 
-**B. Android Studio:**
+`build-apk-for-site.mjs` 会把 `capacitor.config.json` 的 `server.url` 与 `www/index.html` 的重连地址临时改成对应域名，跑 `cap sync` + Gradle release，把产物拷到 `dist-apk/`，最后还原这两个文件。首次构建要下载 Gradle 和依赖，等几分钟。
+
+前置（都在本机、已 gitignore）：
+
+| 文件 | 内容 |
+|---|---|
+| `keystore/eazycount.keystore` | 签名密钥 |
+| `android/keystore.properties` | `storeFile=../../keystore/eazycount.keystore`、`storePassword`、`keyAlias`、`keyPassword` |
+| `android/local.properties` | `sdk.dir=<Android SDK 路径>`（如 `C:\Android\sdk`） |
+
+需要 Node ≥ 20、JDK ≥ 17（AGP 8.13 / Gradle 8.14）；SDK 组件：`platform-tools`、`platforms;android-36`、`build-tools;36.0.0`。
+
+**上传（三个域名各放自己那份，不要跨域名复制）**
 
 ```bash
-cd c168_mobile/app
-npm run open:android     # 打开 Android Studio
-# 菜单 Build → Build App Bundle(s)/APK(s) → Build APK(s)
+cd c168_mobile/app && scp -i ~/.ssh/count168-ec2.pem \
+  dist-apk/EazyCount-v1.1-site.apk ec2-user@56.68.48.190:/var/www/count168/app/EazyCount-v1.1.apk
+scp -i ~/.ssh/count168-ec2.pem dist-apk/EazyCount-v1.1-org.apk ec2-user@56.68.48.190:/var/www/count168.org/app/EazyCount-v1.1.apk
+scp -i ~/.ssh/count168-ec2.pem dist-apk/EazyCount-v1.1-com.apk ec2-user@56.68.48.190:/var/www/count168.com/app/EazyCount-v1.1.apk
 ```
 
-首次构建会下载 Gradle 和依赖,需要等几分钟。
+（上传新版后可删掉各目录里的旧包；`deploy/publish-app-page.sh` 只发布 install-page 里的页面文件，**不会**再复制/借用 APK。）
+
+**Android Studio（备用）**：`npm run open:android` → Build → Build APK(s)；注意先把 `capacitor.config.json` 的 `server.url` 改成目标域名再构建。
 
 ## 发新版改什么
 
@@ -47,6 +66,7 @@ npm run open:android     # 打开 Android Studio
 | 版本号 | `android/app/build.gradle` 的 `versionCode`(每次+1)/ `versionName` |
 | 线上地址 | `capacitor.config.json` → `server.url`,以及 `www/index.html` 兜底页里的重连地址 |
 | 包名 | 一般不改;要改则 `capacitor.config.json`、`android/app/build.gradle` 的 `applicationId`、`android/app/src/main/java/.../MainActivity.java` 的 package 行 |
+| 出包 | 改动后**三个域名都要重新出包**（`npm run build:apk:site\|org\|com`）并分别上传到各自域名的 `/app/` |
 
 改完记得 `npx cap sync android`(仅原生插件变化时需要,纯改配置后重新构建即可)。
 
@@ -62,14 +82,15 @@ npm run open:android     # 打开 Android Studio
     -dname "CN=EazyCount, OU=Mobile, O=Count168, C=MY"
   ```
 - ⚠️ 换签名后已安装用户必须卸载重装(签名不一致无法覆盖安装)。
+- ⚠️ **当前状态：本机、服务器、四个仓库的 git 历史里都找不到这把密钥**（等待从当年出包的机器/备份找回）。找回前不要用新密钥重建，否则已安装用户都要卸载重装一次。
 
 ## 新电脑环境搭建
 
 1. 装 Node ≥ 20、JDK ≥ 17(或直接装 Android Studio,自带 JBR)
-2. 装 Android Studio(或只装 cmdline-tools 并设 `ANDROID_HOME`)
+2. 装 Android SDK（Android Studio，或只装 cmdline-tools 后 `sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"`），并写 `android/local.properties` 的 `sdk.dir`
 3. `cd c168_mobile/app && npm i`
-4. 按 `android/keystore.properties` 模板重建签名(或从旧机拷 `keystore/` 过去)
-5. `npm run build:apk`
+4. 放好 `keystore/eazycount.keystore` 并写 `android/keystore.properties`（或从旧机拷 `keystore/` 过去）
+5. `npm run build:apk:site`（以及 `:org`、`:com`）
 
 ## 下载页(install-page/)
 
@@ -104,29 +125,28 @@ APP_ROOT=/var/www/count168     bash /var/www/count168/deploy/publish-app-page.sh
 cd c168_mobile/app && npm i && node make-qr.mjs   # 同时生成 qr.png 与 qr-org.png
 ```
 
-**APK**(不进 git,`c168_mobile/app/*.apk` 已 gitignore)
+**APK**(不进 git,`c168_mobile/app/*.apk`、`dist-apk/` 已 gitignore)
 
-- 线上文件在 site 目录:`/var/www/count168/app/EazyCount-v1.0.apk`;
-- org 的 `/app/` 没有 apk 时,发布脚本自动从 site 目录借一份(同机),不必重复上传;
-- 发新版 APK:把新文件传到 site 的 `/var/www/count168/app/`、删掉旧包,并同步更新 `install-page/index.html` 里的**版本号和大小文案**(Android 卡片上有两处);org 要换新包就先删旧的,再触发一次部署让脚本重新借:
-
-```bash
-sudo rm -f /var/www/count168.org/app/*.apk   # 下次 deploy 自动从 site 复制新的
-```
+- **每个域名一份**、各自指向自己的域名：用 `npm run build:apk:site|org|com` 出包后，把 `dist-apk/EazyCount-v1.1-<域名>.apk` 分别 scp 到 `/var/www/<域名目录>/app/EazyCount-v1.1.apk`（详见上面「日常出包」）；
+- **绝不要把某个域名的包复制到别的域名**——包里的 `server.url` 是写死的，放错了用户登录后看到的就是另一个域名的数据；
+- 发新版：改 `android/app/build.gradle` 的 `versionCode`/`versionName` → 三个域名各出一次包 → 各自上传新文件、删旧文件，并同步更新 `install-page/index.html` 里的**版本号和大小文案**（Android 卡片上有两处，含下载链接文件名）。
 
 **验证**
 
 ```bash
+# /app 页面
 curl -sI https://count168.site/app/ | head -1
 curl -sI https://www.count168.org/app/ | head -1
-curl -sI https://www.count168.org/app/EazyCount-v1.0.apk | head -1
+curl -sI https://www.count168.com/app/ | head -1
+# 各域名的 APK 可下载，且包内 server.url 指向自己（在服务器上跑）
+for d in count168 count168.org count168.com; do
+  python3 -c "import zipfile,sys;print('$d', zipfile.ZipFile('/var/www/$d/app/EazyCount-v1.1.apk').read('assets/capacitor.config.json').decode()[:200])"
+done
 ```
 
 count168.site / count168.org / count168.com 三个域名都已接 `/app/`（count168.net 未接）。
 
-**注意：安卓壳固定从 `https://count168.site/c168_mobile/frontend/dist/` 启动**（`capacitor.config.json` 的 `server.url`），而三个域名的数据库各自独立（site=`u857194726_c168site`、org=`c168_org`、com=`c168_net`）——所以从 org/com 下载的 APK 打开后用的是 **site 的账号体系与数据**。iPhone「添加到主屏幕」是按各自域名安装的（manifest 里是相对路径），不受影响。
-
-要做到"每个域名一份 App"，需要把 `server.url` 做成构建参数、分别出包并各自放到对应域名的 `/app/`；目前签名密钥 `keystore/eazycount.keystore` 已丢失，重建会导致已安装用户必须卸载重装。
+**三个域名的数据是各自独立的库**（site=`u857194726_c168site`、org=`c168_org`、com=`c168_net`），所以 App 必须一域名一份：从哪个域名下载，就用哪个域名的账号与数据。iPhone「添加到主屏幕」是按各自域名安装的（manifest 里是相对路径），本来就不受影响。
 
 ## 已做的定制
 

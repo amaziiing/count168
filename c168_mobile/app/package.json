@@ -7,8 +7,11 @@
     "open:android": "npx cap open android",
     "sync": "npx cap sync android",
     "splash": "node make-splash.mjs && npx @capacitor/assets generate --android --assetPath assets --iconBackgroundColor '#ffffff' --splashBackgroundColor '#ffffff'",
-    "build:apk": "cd android && gradlew.bat assembleRelease",
-    "build:apk:debug": "cd android && gradlew.bat assembleDebug"
+    "build:apk": "node build-apk-for-site.mjs site",
+    "build:apk:debug": "cd android && gradlew.bat assembleDebug",
+    "build:apk:site": "node build-apk-for-site.mjs site",
+    "build:apk:org": "node build-apk-for-site.mjs org",
+    "build:apk:com": "node build-apk-for-site.mjs com"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.1",
