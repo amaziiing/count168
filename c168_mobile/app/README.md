@@ -124,13 +124,9 @@ curl -sI https://www.count168.org/app/EazyCount-v1.0.apk | head -1
 
 count168.site / count168.org / count168.com 三个域名都已接 `/app/`（count168.net 未接）。
 
-## 三个域名的 App 与数据（重要）
+**注意：安卓壳固定从 `https://count168.site/c168_mobile/frontend/dist/` 启动**（`capacitor.config.json` 的 `server.url`），而三个域名的数据库各自独立（site=`u857194726_c168site`、org=`c168_org`、com=`c168_net`）——所以从 org/com 下载的 APK 打开后用的是 **site 的账号体系与数据**。iPhone「添加到主屏幕」是按各自域名安装的（manifest 里是相对路径），不受影响。
 
-**安卓壳固定从 `https://count168.site/c168_mobile/frontend/dist/` 启动**（见 `capacitor.config.json` 的 `server.url`），而三个域名的数据库是各自独立的（site=`u857194726_c168site`、org=`c168_org`、com=`c168_net`），所以：
-
-- 从 org/com 下载的 APK 装好后，默认打开的是 **site** 的应用 → 要看到自己域名的数据，必须在**登录页用「站点」按钮切到自己的域名**（选一次即可，之后 App 启动会自动跳回该域名，见 `c168_mobile/frontend/src/lib/siteSwitch.js`）；
-- iPhone「添加到主屏幕」是按各自域名安装的（`manifest.json` 里是相对路径），不存在这个问题；
-- 想彻底做到"每个域名一份 App"，需要把 `server.url` 做成构建参数、分别出包并各自放到对应域名的 `/app/`——目前签名密钥 `keystore/eazycount.keystore` 已丢失，重建会导致已安装用户必须卸载重装，故暂用登录页切换方案。
+要做到"每个域名一份 App"，需要把 `server.url` 做成构建参数、分别出包并各自放到对应域名的 `/app/`；目前签名密钥 `keystore/eazycount.keystore` 已丢失，重建会导致已安装用户必须卸载重装。
 
 ## 已做的定制
 

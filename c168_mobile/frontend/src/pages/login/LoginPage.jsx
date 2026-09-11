@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { LOGIN_I18N, localizeAuthApiMessage } from "../../translateFile/authTranslate.js";
 import { readLoginLang, writeLoginLang } from "../../lib/loginLang.js";
-import { SITE_OPTIONS, currentSiteKey, switchSite } from "../../lib/siteSwitch.js";
 import { buildApiUrl } from "../../utils/apiUrl.js";
 import { resolveMobileLandingPath } from "../../utils/mobilePermissions.js";
 import { useAuthBackground } from "./useAuthBackground.js";
@@ -141,7 +140,6 @@ export default function LoginPage() {
   const langThumbRef = useRef(null);
   const prevLangRef = useRef(lang);
   const i18n = useMemo(() => LOGIN_I18N[lang] || LOGIN_I18N.en, [lang]);
-  const currentSite = currentSiteKey();
 
   const setLoginRole = useCallback(
     (nextRole) => {
@@ -498,23 +496,6 @@ export default function LoginPage() {
                 <button type="submit" className="sc-login-btn sc-login-submit-btn" disabled={submitting}>
                   <span>{submitting ? i18n.loggingIn : i18n.login}</span>
                 </button>
-
-                <div className="sc-login-site-wrap">
-                  <div className="sc-login-site-list" role="group" aria-label={i18n.siteLabel}>
-                    {SITE_OPTIONS.map((site) => (
-                      <button
-                        key={site.key}
-                        type="button"
-                        className={`sc-login-site-chip${currentSite === site.key ? " active" : ""}`}
-                        aria-pressed={currentSite === site.key}
-                        onClick={() => switchSite(site.key)}
-                      >
-                        {site.label}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="sc-login-site-hint">{i18n.siteHint}</p>
-                </div>
 
                 <div className="sc-login-lang-ios-wrap">
                   <div

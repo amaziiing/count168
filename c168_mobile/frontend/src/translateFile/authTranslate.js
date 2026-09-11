@@ -96,8 +96,6 @@ export const LOGIN_I18N = {
     confirm: "Confirm",
     maintenanceLabel: "System Maintenance:",
     unknownError: "Unknown error",
-    siteLabel: "Site",
-    siteHint: "Each domain keeps its own data — pick your site",
   },
   zh: {
     admin: "管理员",
@@ -114,8 +112,6 @@ export const LOGIN_I18N = {
     loggingIn: "登录中...",
     notice: "提示",
     loginFailed: "登录失败",
-    siteLabel: "站点",
-    siteHint: "各域名数据独立，请选择你的站点",
     loginError: "登录时发生错误",
     loginBackendOffline: "无法连接 PHP 后端。请在项目根目录运行：php -S 127.0.0.1:8000",
     loginServerError: "服务器错误 (HTTP {status})。请检查本地 PHP 与数据库。",

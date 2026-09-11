@@ -234,31 +234,3 @@
   font-size: 0.875rem;
   font-weight: 800;
 }
-
-/* Site picker — same domains as the login screen (each keeps its own data). */
-.m-more-site-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.4rem;
-}
-
-.m-more-site-chip {
-  min-width: 3rem;
-  padding: 0.3rem 0.7rem;
-  border: 1px solid var(--m-color-ring);
-  border-radius: 999px;
-  background: var(--m-color-surface-muted);
-  color: var(--m-color-text-secondary);
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-}
-
-.m-more-site-chip.active {
-  border-color: transparent;
-  background: var(--m-grad-brand, linear-gradient(90deg, #63c4ff 0%, #0d60ff 100%));
-  color: #fff;
-}
