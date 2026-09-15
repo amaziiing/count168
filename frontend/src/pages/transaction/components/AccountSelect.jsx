@@ -6,6 +6,12 @@ import { layoutPortalCustomSelect } from "../../../components/customSelectPortal
 
 const SEARCH_RESERVE = 52;
 
+/**
+ * Rows mounted per page of the option list. A company (or group) scope can hold thousands of
+ * accounts, and mounting every match makes each keystroke cost seconds on a phone CPU.
+ */
+const OPTION_WINDOW_STEP = 40;
+
 export function AccountSelect({
   placeholder,
   options,
@@ -19,6 +25,7 @@ export function AccountSelect({
 }) {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("");
+  const [windowSize, setWindowSize] = useState(OPTION_WINDOW_STEP);
   const [menuStyle, setMenuStyle] = useState(null);
   const [optionsMaxHeight, setOptionsMaxHeight] = useState(240);
   const searchRef = useRef(null);
@@ -26,18 +33,77 @@ export function AccountSelect({
   const buttonRef = useRef(null);
   const dropdownRef = useRef(null);
 
-  const filtered = useMemo(() => {
-    const q = filter.trim().toUpperCase();
+  /** Uppercased haystack per option, rebuilt only when the account list changes. */
+  const searchableOptions = useMemo(() => {
     const rows = Array.isArray(options) ? options : [];
-    if (!q) return rows;
-    return rows.filter((r) => String(r.display_text || "").toUpperCase().includes(q));
-  }, [options, filter]);
+    return rows.map((row) => ({ row, hay: String(row.display_text || "").toUpperCase() }));
+  }, [options]);
 
-  const { setHighlightIdx, listRef, handleListKeyDown, handleButtonKeyDown, highlightClass } = useListboxKeyboard({
+  const matchedOptions = useMemo(() => {
+    const q = filter.trim().toUpperCase();
+    if (!q) return searchableOptions;
+    return searchableOptions.filter((entry) => entry.hay.includes(q));
+  }, [searchableOptions, filter]);
+
+  /** Full match set — indexes here are what keyboard selection and `data-kb-idx` refer to. */
+  const filtered = useMemo(() => matchedOptions.map((entry) => entry.row), [matchedOptions]);
+
+  /** Only a page of the match set is mounted; scrolling / keyboard navigation grows it. */
+  const renderedOptions = useMemo(() => filtered.slice(0, windowSize), [filtered, windowSize]);
+
+  const growWindow = useCallback(() => {
+    setWindowSize((size) =>
+      size < filtered.length ? Math.min(filtered.length, size + OPTION_WINDOW_STEP) : size,
+    );
+  }, [filtered.length]);
+
+  const onOptionsScroll = useCallback(
+    (e) => {
+      const el = e.currentTarget;
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 48) growWindow();
+    },
+    [growWindow],
+  );
+
+  const {
+    highlightIdx,
+    setHighlightIdx,
+    listRef,
+    handleListKeyDown,
+    handleButtonKeyDown,
+    highlightClass,
+  } = useListboxKeyboard({
     open,
     itemCount: filtered.length,
     resetToken: filter,
   });
+
+  /**
+   * Keyboard navigation walks one row at a time, so the window follows it. The wrap-around jump
+   * (ArrowUp on the first row of a long list) parks on the last mounted row instead of mounting
+   * everything — Enter then still selects a row the user can see.
+   */
+  useEffect(() => {
+    if (!open) return;
+    const windowEnd = windowSize - 1;
+    if (highlightIdx < windowEnd) return;
+    if (highlightIdx - windowEnd <= 1) {
+      setWindowSize((size) => Math.min(filtered.length, size + OPTION_WINDOW_STEP));
+      return;
+    }
+    setHighlightIdx(Math.max(0, windowEnd - 1));
+  }, [highlightIdx, windowSize, open, filtered.length, setHighlightIdx]);
+
+  /** A new query starts the window over, so each keystroke only mounts one page of rows. */
+  const applyFilter = useCallback(
+    (next) => {
+      const text = String(next ?? "");
+      if (text === filter) return;
+      setFilter(text);
+      setWindowSize(OPTION_WINDOW_STEP);
+    },
+    [filter],
+  );
 
   const positionMenu = useCallback(() => {
     const btn = buttonRef.current;
@@ -99,6 +165,7 @@ export function AccountSelect({
       setTimeout(() => searchRef.current?.focus(), 0);
     } else {
       setFilter("");
+      setWindowSize(OPTION_WINDOW_STEP);
     }
   }, [open]);
 
@@ -113,6 +180,7 @@ export function AccountSelect({
     (seed = "") => {
       if (disabled) return;
       setFilter(seed);
+      setWindowSize(OPTION_WINDOW_STEP);
       positionMenu();
       setOpen(true);
     },
@@ -156,7 +224,7 @@ export function AccountSelect({
             autoComplete="off"
             disabled={disabled}
             value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            onChange={(e) => applyFilter(e.target.value)}
             style={{ textTransform: "uppercase" }}
             onKeyDown={(e) => {
               if (e.key === "Escape") {
@@ -179,12 +247,13 @@ export function AccountSelect({
         <div
           className="custom-select-options"
           ref={listRef}
+          onScroll={onOptionsScroll}
           style={{ flex: "1 1 auto", minHeight: 0, maxHeight: optionsMaxHeight }}
         >
           {filtered.length === 0 ? (
             <div className="custom-select-no-results">No results</div>
           ) : (
-            filtered.map((opt, idx) => (
+            renderedOptions.map((opt, idx) => (
               <div
                 key={opt.id}
                 data-kb-idx={idx}
