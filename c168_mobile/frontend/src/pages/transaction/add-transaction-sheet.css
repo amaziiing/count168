@@ -372,3 +372,150 @@
 .m-tx-account-field > * + * {
   margin-top: 0.375rem;
 }
+
+/* Account field trigger: a <select>-styled button so the sheet keeps its old look
+   while the options open in a searchable panel instead of the native OS popup. */
+.m-tx-account-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: var(--m-color-text);
+  text-align: left;
+}
+
+.m-tx-account-trigger:disabled {
+  opacity: 0.5;
+}
+
+.m-tx-account-trigger-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.m-tx-account-trigger-caret {
+  flex-shrink: 0;
+  font-size: var(--m-text-caption);
+  color: var(--m-color-label);
+}
+
+/* Search panel: covers the sheet body (positioned against .m-add-tx-panel). */
+.m-tx-account-picker {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  /* beats `.m-tx-account-field > * + *` so the panel really covers the sheet */
+  margin: 0;
+  background: var(--m-color-surface);
+}
+
+.m-tx-account-picker-head {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--m-color-ring-soft);
+  padding: 0.75rem 1rem;
+}
+
+.m-tx-account-picker-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--m-color-text);
+}
+
+.m-tx-account-picker-close {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 0.75rem;
+  background: var(--m-color-surface-muted);
+  color: var(--m-color-muted);
+}
+
+.m-tx-account-picker-search {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--m-color-ring-soft);
+  padding: 0.75rem 1rem;
+  color: var(--m-color-label);
+}
+
+.m-tx-account-picker-search input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--m-color-ring);
+  border-radius: 0.75rem;
+  background: var(--m-color-surface-muted);
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--m-color-text);
+  outline: none;
+}
+
+.m-tx-account-picker-search input:focus {
+  border-color: var(--m-color-primary);
+}
+
+.m-tx-account-picker-list {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.5rem 0.75rem calc(env(safe-area-inset-bottom, 0px) + 12px);
+}
+
+.m-tx-account-picker-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--m-color-text);
+  text-align: left;
+}
+
+.m-tx-account-picker-item + .m-tx-account-picker-item {
+  margin-top: 0.25rem;
+}
+
+.m-tx-account-picker-item.is-selected {
+  background: var(--m-color-surface-muted);
+  color: var(--m-color-primary);
+}
+
+.m-tx-account-picker-tick {
+  flex-shrink: 0;
+  font-size: var(--m-text-caption);
+}
+
+.m-tx-account-picker-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.m-tx-account-picker-empty {
+  padding: 1rem 0.75rem;
+  font-size: var(--m-text-secondary);
+  font-weight: 500;
+  color: var(--m-color-muted);
+  text-align: center;
+}
