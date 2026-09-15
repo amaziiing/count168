@@ -80,27 +80,153 @@ function DateTapRow({ label, value, onChange, disabled, badge }) {
   );
 }
 
-function AccountPicker({ label, placeholder, options, value, onChange, disabled }) {
+/**
+ * Account field with a searchable list. A native `<select>` cannot filter, and the
+ * account list runs long, so tapping the field opens a search + list panel over the
+ * sheet (positioned against `.m-add-tx-panel`).
+ */
+function AccountPicker({
+  label,
+  placeholder,
+  options,
+  value,
+  onChange,
+  disabled,
+  searchPlaceholder,
+  noMatchText,
+  closeLabel,
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const searchRef = useRef(null);
+
+  const rows = useMemo(() => (Array.isArray(options) ? options : []), [options]);
+  const filtered = useMemo(() => {
+    const q = query.trim().toUpperCase();
+    if (!q) return rows;
+    return rows.filter((o) => {
+      const text = String(o.display_text || "").toUpperCase();
+      const code = String(o.account_id || "").toUpperCase();
+      return text.includes(q) || code.includes(q);
+    });
+  }, [rows, query]);
+
+  const close = useCallback(() => {
+    setOpen(false);
+    setQuery("");
+  }, []);
+
+  useEffect(() => {
+    if (open) searchRef.current?.focus();
+  }, [open]);
+
+  // Escape closes only this panel; the sheet's own Escape handler must not fire with it.
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      close();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [open, close]);
+
+  const pick = (opt) => {
+    onChange(opt);
+    close();
+  };
+
+  const selectedId = value?.id != null && value.id !== "" ? String(value.id) : "";
+
   return (
     <div className="m-tx-account-field">
       {label ? <label className="m-tx-form-label">{label}</label> : null}
-      <select
-        value={value?.id ? String(value.id) : ""}
+      <button
+        type="button"
+        className="m-tx-form-select m-tx-account-trigger"
         disabled={disabled}
-        onChange={(e) => {
-          const id = e.target.value;
-          onChange(options.find((o) => String(o.id) === id) || null);
-        }}
-        className="m-tx-form-select"
+        aria-haspopup="dialog"
+        aria-expanded={open}
         aria-label={label || placeholder}
+        onClick={() => {
+          if (disabled) return;
+          setOpen(true);
+        }}
       >
-        <option value="">{placeholder}</option>
-        {(options || []).map((o) => (
-          <option key={String(o.id)} value={String(o.id)}>
-            {o.display_text || o.account_id}
-          </option>
-        ))}
-      </select>
+        <span className="m-tx-account-trigger-text">
+          {value?.display_text || value?.account_id || placeholder}
+        </span>
+        <i className="fas fa-chevron-down m-tx-account-trigger-caret" aria-hidden="true" />
+      </button>
+
+      {open ? (
+        <div className="m-tx-account-picker" role="dialog" aria-modal="true" aria-label={label || placeholder}>
+          <div className="m-tx-account-picker-head">
+            <span className="m-tx-account-picker-title">{label || placeholder}</span>
+            <button
+              type="button"
+              className="m-tx-account-picker-close tap-scale"
+              aria-label={closeLabel}
+              onClick={close}
+            >
+              <i className="fas fa-times" aria-hidden="true" />
+            </button>
+          </div>
+
+          <label className="m-tx-account-picker-search">
+            <i className="fas fa-magnifying-glass" aria-hidden="true" />
+            <input
+              ref={searchRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={searchPlaceholder}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              enterKeyHint="search"
+            />
+          </label>
+
+          <div className="m-tx-account-picker-list">
+            {query.trim() ? null : (
+              <button
+                type="button"
+                className={`m-tx-account-picker-item${selectedId ? "" : " is-selected"}`}
+                onClick={() => pick(null)}
+              >
+                <span className="m-tx-account-picker-text">{placeholder}</span>
+                {selectedId ? null : (
+                  <i className="fas fa-check m-tx-account-picker-tick" aria-hidden="true" />
+                )}
+              </button>
+            )}
+            {filtered.length === 0 ? (
+              <p className="m-tx-account-picker-empty">{noMatchText}</p>
+            ) : (
+              filtered.map((o) => {
+                const isSelected = selectedId !== "" && String(o.id) === selectedId;
+                return (
+                  <button
+                    type="button"
+                    key={String(o.id)}
+                    className={`m-tx-account-picker-item${isSelected ? " is-selected" : ""}`}
+                    aria-pressed={isSelected}
+                    onClick={() => pick(o)}
+                  >
+                    <span className="m-tx-account-picker-text">{o.display_text || o.account_id}</span>
+                    {isSelected ? (
+                      <i className="fas fa-check m-tx-account-picker-tick" aria-hidden="true" />
+                    ) : null}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -164,6 +290,14 @@ export default function AddTransactionSheet({
   const needsFromTo = ["CONTRA", "PAYMENT", "CLAIM", "PROFIT", "CLEAR"].includes(txType);
   const isRate = txType === "RATE";
   const isAdjustment = txType === "ADJUSTMENT";
+
+  const pickerLabels = {
+    searchPlaceholder: m.searchAccount,
+    noMatchText: m.noAccountMatch,
+    closeLabel: m.close,
+  };
+  /** Owner preference: MYR leads whenever the company offers it (same rule as Add Account). */
+  const myrAvailable = currencyOptions.includes("MYR");
 
   const resetForm = useCallback(() => {
     setTxType("PAYMENT");
@@ -251,10 +385,13 @@ export default function AddTransactionSheet({
   }, [open, prefill]);
 
   useEffect(() => {
-    if (!open || !isRate) return;
-    if (!rateCurrencyFrom && currencyOptions.includes("MYR")) setRateCurrencyFrom("MYR");
-    if (!rateCurrencyTo && currencyOptions.includes("MYR")) setRateCurrencyTo("MYR");
-  }, [open, isRate, currencyOptions, rateCurrencyFrom, rateCurrencyTo]);
+    if (!open || !myrAvailable) return;
+    // Functional form: a prefill/selection queued in the same commit still wins.
+    setTxCurrency((prev) => prev || "MYR");
+    if (!isRate) return;
+    setRateCurrencyFrom((prev) => prev || "MYR");
+    setRateCurrencyTo((prev) => prev || "MYR");
+  }, [open, isRate, myrAvailable]);
 
   useEffect(() => {
     if (!isRate) return;
@@ -529,6 +666,7 @@ export default function AddTransactionSheet({
                 value={txToAccount}
                 onChange={setTxToAccount}
                 disabled={mutationsBlocked}
+                {...pickerLabels}
               />
               {needsFromTo && (
                 <AccountPicker
@@ -538,6 +676,7 @@ export default function AddTransactionSheet({
                   value={txFromAccount}
                   onChange={setTxFromAccount}
                   disabled={mutationsBlocked}
+                  {...pickerLabels}
                 />
               )}
               <div className="m-tx-form-field">
@@ -584,6 +723,7 @@ export default function AddTransactionSheet({
                   value={rateToAccount}
                   onChange={setRateToAccount}
                   disabled={mutationsBlocked}
+                  {...pickerLabels}
                 />
                 <AccountPicker
                   label=""
@@ -592,6 +732,7 @@ export default function AddTransactionSheet({
                   value={rateFromAccount}
                   onChange={setRateFromAccount}
                   disabled={mutationsBlocked}
+                  {...pickerLabels}
                 />
                 <button
                   type="button"
@@ -696,6 +837,7 @@ export default function AddTransactionSheet({
                   value={rateTransferToAccount}
                   onChange={setRateTransferToAccount}
                   disabled={mutationsBlocked}
+                  {...pickerLabels}
                 />
                 <AccountPicker
                   label=""
@@ -704,6 +846,7 @@ export default function AddTransactionSheet({
                   value={rateTransferFromAccount}
                   onChange={setRateTransferFromAccount}
                   disabled={mutationsBlocked}
+                  {...pickerLabels}
                 />
                 <button
                   type="button"
@@ -729,6 +872,7 @@ export default function AddTransactionSheet({
                   value={rateMiddlemanAccount}
                   onChange={setRateMiddlemanAccount}
                   disabled={mutationsBlocked}
+                  {...pickerLabels}
                 />
                 <input
                   type="text"
