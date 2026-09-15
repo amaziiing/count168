@@ -23,6 +23,9 @@ import "./add-transaction-sheet.css";
 
 const TX_TYPES = ["CONTRA", "PAYMENT", "CLAIM", "PROFIT", "RATE", "ADJUSTMENT", "CLEAR"];
 
+/** Rows mounted per page of the account picker list (see AccountPicker). */
+const OPTION_WINDOW_STEP = 40;
+
 function sanitizeAmountInput(value) {
   const raw = String(value ?? "").replace(/,/g, "");
   if (raw === "") return "";
@@ -98,22 +101,63 @@ function AccountPicker({
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [windowSize, setWindowSize] = useState(OPTION_WINDOW_STEP);
   const searchRef = useRef(null);
 
   const rows = useMemo(() => (Array.isArray(options) ? options : []), [options]);
+
+  /** Uppercased search keys per row, rebuilt only when the account list changes. */
+  const searchableRows = useMemo(
+    () =>
+      rows.map((row) => ({
+        row,
+        text: String(row.display_text || "").toUpperCase(),
+        code: String(row.account_id || "").toUpperCase(),
+      })),
+    [rows],
+  );
+
   const filtered = useMemo(() => {
     const q = query.trim().toUpperCase();
-    if (!q) return rows;
-    return rows.filter((o) => {
-      const text = String(o.display_text || "").toUpperCase();
-      const code = String(o.account_id || "").toUpperCase();
-      return text.includes(q) || code.includes(q);
-    });
-  }, [rows, query]);
+    if (!q) return searchableRows;
+    return searchableRows.filter((entry) => entry.text.includes(q) || entry.code.includes(q));
+  }, [searchableRows, query]);
+
+  /**
+   * Only one page of the match set is mounted: an account list can run into the thousands, and
+   * mounting every row blocks the phone for seconds on open and again on every delete.
+   */
+  const visibleRows = useMemo(() => filtered.slice(0, windowSize), [filtered, windowSize]);
+
+  const growWindow = useCallback(() => {
+    setWindowSize((size) =>
+      size < filtered.length ? Math.min(filtered.length, size + OPTION_WINDOW_STEP) : size,
+    );
+  }, [filtered.length]);
+
+  const onListScroll = useCallback(
+    (e) => {
+      const el = e.currentTarget;
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 48) growWindow();
+    },
+    [growWindow],
+  );
+
+  /** A new query starts the window over, so each keystroke mounts only one page of rows. */
+  const applyQuery = useCallback(
+    (next) => {
+      const text = String(next ?? "");
+      if (text === query) return;
+      setQuery(text);
+      setWindowSize(OPTION_WINDOW_STEP);
+    },
+    [query],
+  );
 
   const close = useCallback(() => {
     setOpen(false);
     setQuery("");
+    setWindowSize(OPTION_WINDOW_STEP);
   }, []);
 
   useEffect(() => {
@@ -176,11 +220,17 @@ function AccountPicker({
 
           <label className="m-tx-account-picker-search">
             <i className="fas fa-magnifying-glass" aria-hidden="true" />
+            {/*
+             * `onInput`/`onCompositionEnd` read the same DOM value as `onChange`: some phone
+             * keyboards only hand the text over when a word composition finishes.
+             */}
             <input
               ref={searchRef}
               type="text"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => applyQuery(e.target.value)}
+              onInput={(e) => applyQuery(e.currentTarget.value)}
+              onCompositionEnd={(e) => applyQuery(e.currentTarget.value)}
               placeholder={searchPlaceholder}
               autoComplete="off"
               autoCorrect="off"
@@ -190,7 +240,7 @@ function AccountPicker({
             />
           </label>
 
-          <div className="m-tx-account-picker-list">
+          <div className="m-tx-account-picker-list" onScroll={onListScroll}>
             {query.trim() ? null : (
               <button
                 type="button"
@@ -206,7 +256,8 @@ function AccountPicker({
             {filtered.length === 0 ? (
               <p className="m-tx-account-picker-empty">{noMatchText}</p>
             ) : (
-              filtered.map((o) => {
+              visibleRows.map((entry) => {
+                const o = entry.row;
                 const isSelected = selectedId !== "" && String(o.id) === selectedId;
                 return (
                   <button
