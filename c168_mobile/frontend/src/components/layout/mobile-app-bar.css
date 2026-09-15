@@ -18,6 +18,8 @@
 }
 
 .m-appbar-btn {
+  /* Badges are absolutely positioned — every app-bar button must anchor its own */
+  position: relative;
   display: grid;
   width: 2.25rem;
   height: 2.25rem;
@@ -42,10 +44,6 @@
   display: flex;
   min-width: 0;
   align-items: center;
-}
-
-.m-appbar-btn--notify {
-  position: relative;
 }
 
 .m-appbar-logo-btn {

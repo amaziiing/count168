@@ -1276,6 +1276,15 @@ function inboxCollectMonthlyPrepaidBillingAnchors(
     // Feature 2：到期不再停时，合同天然结束日不再截断链式月付账期，交给 endCap（今天所在月）自然限速。
     $term = $unlimitedWindow ? null : getBillingTermMonthsFromContract($contract);
     $exclusiveEnd = ($term !== null && $term >= 1) ? billingContractExclusiveEndYmdMonthlyAfterPartialFirst($startDate, $term) : null;
+    // day_end 是链式应付日的重叠锚点（上一期结束日=下一期应付日），任何 >= day_end 的应付日都已经没有
+    // 剩余天数可开新的一期；exclusiveEnd 是纯按合同月数算出的理论边界，遇到 day_end 更早时须以更早者为准，
+    // 否则会在 day_end 当天多切出一期完全落在合同之外的账单。
+    if (!$unlimitedWindow && $dayEnd !== null && trim((string) $dayEnd) !== '' && strtotime((string) $dayEnd) !== false) {
+        $dayEndYmd = date('Y-m-d', strtotime((string) $dayEnd));
+        if ($exclusiveEnd === null || $dayEndYmd < $exclusiveEnd) {
+            $exclusiveEnd = $dayEndYmd;
+        }
+    }
 
     $anchors = billingCollectMonthlyChainedDueAnchors(
         $startDate,

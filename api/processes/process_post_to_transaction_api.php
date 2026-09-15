@@ -895,6 +895,15 @@ function inferOpenMonthlyBillingMonthYn(PDO $pdo, int $companyId, array $r, stri
     if ($startDate !== '' && ($resendRelaxMonthly || $today >= $createdYmd)) {
         $term = $unlimitedWindow ? null : getBillingTermMonthsFromContract($contract);
         $exclusiveEnd = ($term !== null && $term >= 1) ? billingContractExclusiveEndYmdMonthlyAfterPartialFirst($startDate, $term) : null;
+        // day_end 是链式应付日的重叠锚点（上一期结束日=下一期应付日），任何 >= day_end 的应付日都已经没有
+        // 剩余天数可开新的一期；exclusiveEnd 是纯按合同月数算出的理论边界，遇到 day_end 更早时须以更早者为准，
+        // 与 process_accounting_inbox_api.php::inboxCollectMonthlyPrepaidBillingAnchors 保持一致。
+        if (!$unlimitedWindow && $dayEnd !== null && trim((string) $dayEnd) !== '' && strtotime((string) $dayEnd) !== false) {
+            $dayEndYmd = date('Y-m-d', strtotime((string) $dayEnd));
+            if ($exclusiveEnd === null || $dayEndYmd < $exclusiveEnd) {
+                $exclusiveEnd = $dayEndYmd;
+            }
+        }
         $anchors = billingCollectMonthlyChainedDueAnchors(
             $startDate,
             $today,
