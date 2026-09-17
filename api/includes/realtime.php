@@ -337,23 +337,3 @@ if (!function_exists('realtime_publish_companies')) {
         );
     }
 }
-
-if (!defined('REALTIME_GLOBAL_CHANNEL')) {
-    // Every issued SSE ticket subscribes to this channel (see ticket_api.php) —
-    // for domains that are not scoped to one company, e.g. system-wide announcements.
-    define('REALTIME_GLOBAL_CHANNEL', 'tx:global');
-}
-
-if (!function_exists('realtime_publish_global')) {
-    /**
-     * Publish to every connected client regardless of their company/group scope.
-     * @param array<string, mixed> $extra
-     */
-    function realtime_publish_global(
-        string $domain,
-        string $source = 'unknown',
-        array $extra = []
-    ): void {
-        realtime_publish([REALTIME_GLOBAL_CHANNEL], $domain, $source, $extra);
-    }
-}

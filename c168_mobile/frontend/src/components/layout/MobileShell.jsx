@@ -9,8 +9,6 @@ import {
   readNotifySeen,
   saveNotifySeen,
 } from "../../lib/notifySeenStore.js";
-import { REALTIME_DOMAINS } from "../../lib/realtime/realtimeEvents.js";
-import { useRealtimeDomain } from "../../lib/realtime/useRealtimeDomain.js";
 import {
   useSyncedLoginLang,
   writeLoginLang,
@@ -215,16 +213,6 @@ export default function MobileShell({
     })();
     return () => ac.abort();
   }, [me]);
-
-  useRealtimeDomain(
-    [REALTIME_DOMAINS.ANNOUNCEMENTS],
-    () => {
-      fetchMobileAnnouncements()
-        .then((rows) => setAnnouncements(rows))
-        .catch(() => {});
-    },
-    { enabled: Boolean(me) },
-  );
   /** Stay in sync when theme is changed from the Settings page
       (language sync is handled by useSyncedLoginLang). */
   useEffect(() => {
