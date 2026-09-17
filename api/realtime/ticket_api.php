@@ -57,6 +57,9 @@ try {
         api_success(realtime_ticket_disabled_payload(), 'No realtime channels for scope');
         exit;
     }
+    // Every ticket also gets the global channel — for domains not scoped to one
+    // company (e.g. system-wide announcements), see realtime_publish_global().
+    $channels[] = REALTIME_GLOBAL_CHANNEL;
 
     // Long-lived enough that EventSource blips can reconnect without minting a new
     // ticket every time; channel access is still HMAC-scoped (not a session cookie).
