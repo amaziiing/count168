@@ -96,11 +96,8 @@ try {
     }
 
     updateAnnouncement($pdo, $announcementId, $title, $content);
-    $company_id = (int) ($_SESSION['company_id'] ?? 0);
-    if ($company_id > 0) {
-        require_once __DIR__ . '/../includes/realtime.php';
-        realtime_publish_companies([$company_id], 'announcements', 'update');
-    }
+    require_once __DIR__ . '/../includes/realtime.php';
+    realtime_publish_global('announcements', 'update');
     jsonResponse(true, 'Announcement updated successfully', null);
 
 } catch (PDOException $e) {
