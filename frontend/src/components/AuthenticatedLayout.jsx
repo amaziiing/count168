@@ -23,6 +23,13 @@ import {
   syncAutoRenewPendingCount,
 } from "../utils/autoRenew/autoRenewPendingSync.js";
 import { useExpirationReminder } from "../hooks/useExpirationReminder.js";
+import {
+  announcementSeenOwnerKey,
+  readAnnouncementSeen,
+  saveAnnouncementSeen,
+} from "../lib/announcementSeenStore.js";
+import { REALTIME_DOMAINS } from "../lib/realtime/realtimeEvents.js";
+import { useRealtimeDomain } from "../lib/realtime/useRealtimeDomain.js";
 import { applyLoginLang } from "../utils/i18n/useLoginLang.js";
 import {
   canAccessDashboard,
@@ -270,6 +277,87 @@ export default function AuthenticatedLayout() {
   const [announcements, setAnnouncements] = useState([]);
   const [announcementsLoading, setAnnouncementsLoading] = useState(false);
   const [readAnnouncements, setReadAnnouncements] = useState(new Set());
+
+  /** Bell badge (announcements) = announcement ids not yet seen this day.
+      Seen ids persist in localStorage keyed "<user>:<day>" so the badge
+      reappears on the next day / different user, and clears once the
+      panel is opened (see markAnnouncementsSeen below). */
+  const [seenAnnouncementIds, setSeenAnnouncementIds] = useState(() => new Set());
+  const seenAnnouncementIdsRef = useRef(new Set());
+  const announcementSeenOwnerKeyRef = useRef("");
+
+  useEffect(() => {
+    const ownerKey = me ? announcementSeenOwnerKey(me.user_id ?? me.id) : "";
+    announcementSeenOwnerKeyRef.current = ownerKey;
+    if (!ownerKey) {
+      seenAnnouncementIdsRef.current = new Set();
+      setSeenAnnouncementIds(seenAnnouncementIdsRef.current);
+      return;
+    }
+    const stored = readAnnouncementSeen();
+    seenAnnouncementIdsRef.current =
+      stored.ownerKey === ownerKey ? new Set(stored.ids) : new Set();
+    setSeenAnnouncementIds(seenAnnouncementIdsRef.current);
+  }, [me]);
+
+  const markAnnouncementsSeen = useCallback((rows) => {
+    if (!rows?.length) return;
+    const ownerKey = announcementSeenOwnerKeyRef.current;
+    if (!ownerKey) return;
+    const next = new Set(seenAnnouncementIdsRef.current);
+    let changed = false;
+    rows.forEach((row) => {
+      const id = Number(row?.id);
+      if (!Number.isNaN(id) && !next.has(id)) {
+        next.add(id);
+        changed = true;
+      }
+    });
+    if (!changed) return;
+    seenAnnouncementIdsRef.current = next;
+    setSeenAnnouncementIds(next);
+    saveAnnouncementSeen(ownerKey, next);
+  }, []);
+
+  const fetchAnnouncementsList = useCallback(async () => {
+    try {
+      const res = await fetch(buildApiUrl("api/announcements/announcement_get_dashboard_api.php"), {
+        credentials: "include",
+      });
+      const json = await res.json();
+      return json?.success && Array.isArray(json.data) ? json.data : [];
+    } catch {
+      return null;
+    }
+  }, []);
+
+  // Fetch once on login so the badge reflects reality without opening the panel.
+  useEffect(() => {
+    if (!me) return undefined;
+    let cancelled = false;
+    fetchAnnouncementsList().then((rows) => {
+      if (!cancelled && rows) setAnnouncements(rows);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [me, fetchAnnouncementsList]);
+
+  // Realtime: refetch as soon as any announcement is created/updated/deleted.
+  useRealtimeDomain(
+    [REALTIME_DOMAINS.ANNOUNCEMENTS],
+    () => {
+      fetchAnnouncementsList().then((rows) => {
+        if (rows) setAnnouncements(rows);
+      });
+    },
+    { enabled: Boolean(me) },
+  );
+
+  const unreadAnnouncementCount = useMemo(
+    () => announcements.filter((row) => !seenAnnouncementIds.has(Number(row?.id))).length,
+    [announcements, seenAnnouncementIds],
+  );
 
   // --- Avatar Selector State ---
   const [showAvatarOptions, setShowAvatarOptions] = useState(false);
@@ -1198,6 +1286,8 @@ export default function AuthenticatedLayout() {
         const json = await res.json();
         if (json.success && json.data) {
           setAnnouncements(json.data);
+          // Panel is in view: treat anything that arrives now as seen.
+          markAnnouncementsSeen(json.data);
         } else {
           setAnnouncements([]);
         }
@@ -1375,7 +1465,7 @@ export default function AuthenticatedLayout() {
               </SidebarMenuTooltip>
             )}
             <img src={assetUrl("images/count_whitelogo.png")} alt="EAZYCOUNT" className="header-logo" />
-            <div className={`notification-bell${hasBellBadge ? " has-unread" : ""}`} onClick={toggleNotifications}>
+            <div className={`notification-bell${hasBellBadge || unreadAnnouncementCount > 0 ? " has-unread" : ""}`} onClick={toggleNotifications}>
                 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M12 2C10.34 2 9 3.34 9 5V5.29C6.72 6.15 5.12 8.39 5.01 11L5 11V16L3 18V19H21V18L19 16V11C18.88 8.39 17.28 6.15 15 5.29V5C15 3.34 13.66 2 12 2ZM12 22C10.9 22 10 21.1 10 20H14C14 21.1 13.1 22 12 22Z" />
                 </svg>
