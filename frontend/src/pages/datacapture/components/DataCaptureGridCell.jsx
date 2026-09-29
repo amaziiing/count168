@@ -11,8 +11,11 @@ import {
   gridRecomputeSubmitState,
   updateBridgeCell,
 } from "../lib/dataCaptureBridge.js";
-function isTextOrFormatCaptureType(captureType = getBridgeCaptureType("")) {
-  return captureType === "1.Text" || captureType === "2.Format";
+/** Capture types whose manual edits keep the typed value (no 2-decimal money formatting). */
+const RAW_EDIT_CAPTURE_TYPES = new Set(["1.Text", "2.Format", "CITIBET", "4.RETURN"]);
+
+function isRawEditCaptureType(captureType = getBridgeCaptureType("")) {
+  return RAW_EDIT_CAPTURE_TYPES.has(captureType);
 }
 
 /** Manual cell edits are always stored uppercase (AAA, BBB, ABC, …). */
@@ -22,7 +25,7 @@ function normalizeCellEditValue(value) {
 
 function finalizeCellEditValue(value, captureType = getBridgeCaptureType("")) {
   let next = normalizeCellEditValue(value);
-  if (!isTextOrFormatCaptureType(captureType)) {
+  if (!isRawEditCaptureType(captureType)) {
     const trimmed = String(next).trim();
     if (trimmed) {
       next = formatMoneyDisplay(trimmed);
